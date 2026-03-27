@@ -1,13 +1,13 @@
-package com.soa.stakeholdersService;
+package com.soa.blogService;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class StakeholdersServiceApplication {
+public class BlogServiceApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(StakeholdersServiceApplication.class, args);
+		SpringApplication.run(BlogServiceApplication.class, args);
 	}
 
 }

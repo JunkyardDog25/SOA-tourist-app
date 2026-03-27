@@ -1,4 +1,4 @@
-package com.soa.stakeholdersService.controllers;
+package com.soa.blogService.controllers;
 
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;

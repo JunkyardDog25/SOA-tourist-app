@@ -1,10 +1,10 @@
-package com.soa.stakeholdersService;
+package com.soa.blogService;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 
 @SpringBootTest
-class StakeholdersServiceApplicationTests {
+class BlogServiceApplicationTests {
 
 	@Test
 	void contextLoads() {

@@ -9,7 +9,7 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.soa</groupId>
-	<artifactId>stakeholdersService</artifactId>
+	<artifactId>blogService</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name/>
 	<description/>
