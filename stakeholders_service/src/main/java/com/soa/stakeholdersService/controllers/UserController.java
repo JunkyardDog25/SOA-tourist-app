@@ -23,4 +23,5 @@ public class UserController {
         String result = userService.registerUser(userDto);
         return ResponseEntity.ok(result);
     }
+    
 }
