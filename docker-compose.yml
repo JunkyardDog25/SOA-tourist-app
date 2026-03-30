@@ -75,11 +75,52 @@ services:
       - blog-net # Komunicira sa svojom Neo4j bazom
       - shared-net # Dostupan stakeholders servisu ako je potrebno
 
+  # ── Neo4j za Auth servis ──────────────────────────────────────────────────────
+  auth-neo4j:
+    image: neo4j:5
+    container_name: auth-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+    ports:
+      - "7476:7474"
+      - "7689:7687"
+    volumes:
+      - auth-neo4j-data:/data
+    networks:
+      - auth-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Auth servis ───────────────────────────────────────────────────────────────
+  auth-service:
+    build: ./auth_service
+    container_name: auth-service
+    ports:
+      - "8081:8080"
+    environment:
+      SPRING_NEO4J_URI: bolt://auth-neo4j:7687
+      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
+      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+    depends_on:
+      auth-neo4j:
+        condition: service_healthy
+    networks:
+      - auth-net
+      - shared-net
+
 volumes:
   stakeholders-neo4j-data:
   blog-neo4j-data:
+  auth-neo4j-data:
 
 networks:
   stakeholders-net: # Izolovana mreža: stakeholders-service <-> stakeholders-neo4j
   blog-net: # Izolovana mreža: blog-service <-> blog-neo4j
+  auth-net: # Izolovana mreža: auth-service <-> auth-neo4j
   shared-net: # Zajednička mreža: servisi međusobno komuniciraju
