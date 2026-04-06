@@ -10,7 +10,6 @@ import com.soa.authService.utils.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,7 +21,6 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtil jwtUtil;
-    private final UserDetailsService userDetailsService;
 
     public AuthResponse register(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
@@ -33,7 +31,7 @@ public class AuthService {
             throw new IllegalArgumentException("Email is already taken");
         }
 
-        if (registerRequest.getRole().equals(Role.ADMIN)) {
+        if (Role.ADMIN.equals(registerRequest.getRole())) {
             throw new IllegalArgumentException("Cannot create user with ADMIN role.");
         }
 
@@ -43,17 +41,20 @@ public class AuthService {
         user.setEmail(registerRequest.getEmail());
         user.setRole(registerRequest.getRole());
 
-        userRepository.save(user);
-        return new AuthResponse(jwtUtil.generateToken(user));
+        User savedUser = userRepository.save(user);
+        return new AuthResponse(jwtUtil.generateToken(savedUser, savedUser.getId()));
     }
 
     public AuthResponse authenticate(LoginRequest loginRequest) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
-                        loginRequest.getPassword()
-                )
+        var authentication = authenticationManager.authenticate(
+            new UsernamePasswordAuthenticationToken(
+                loginRequest.getEmail(),
+                loginRequest.getPassword()
+            )
         );
-        return new AuthResponse(jwtUtil.generateToken(userDetailsService.loadUserByUsername(loginRequest.getEmail())));
+
+        User user = (User) authentication.getPrincipal();
+        return new AuthResponse(jwtUtil.generateToken(user, user.getId()));
     }
+
 }

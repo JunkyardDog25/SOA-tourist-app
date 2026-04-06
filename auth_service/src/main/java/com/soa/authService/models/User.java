@@ -35,8 +35,8 @@ public class User implements UserDetails {
     private String email;
 
     private Role role;
-
-    private String token;
+    
+    private boolean blocked=false;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -51,16 +51,16 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return true;
+        return !blocked; // ← ovo je semantički ispravno
     }
 
+    @Override
+    public boolean isEnabled() {
+        return true; // osim ako imaš posebnu logiku za enable/disable
+    }
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
 
-    @Override
-    public boolean isEnabled() {
-        return true;
-    }
 }
