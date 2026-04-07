@@ -1,11 +1,11 @@
 package com.soa.authService.services;
 
-
 import com.soa.authService.dtos.UserResponseDto;
 import com.soa.authService.models.User;
 import com.soa.authService.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
-
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,8 +17,15 @@ public class AdminUserService {
     private final UserRepository userRepository;
 
     public List<UserResponseDto> getAllUsers() {
-        return userRepository.findAll() //Vraća objekat User koji pretvramo u stream i mapiramo na UserResponseDto, a zatim vraćamo kao listu
-                .stream()//.map(user -> new UserResponseDto(user.getId(), user.getUsername(), user.getEmail(), user.getRole(), user.isBlocked()))//mapiramo svaki User objekat u UserResponseDto
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String currentUsernameOrEmail = authentication.getName();
+
+        return userRepository.findAll()
+                .stream()
+                .filter(user ->
+                        !user.getUsername().equals(currentUsernameOrEmail) &&
+                        !user.getEmail().equals(currentUsernameOrEmail)
+                )
                 .map(this::mapToDto)
                 .toList();
     }
