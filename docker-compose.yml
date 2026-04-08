@@ -31,6 +31,8 @@ services:
       SPRING_NEO4J_URI: bolt://stakeholders-neo4j:7687
       SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
       SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       stakeholders-neo4j:
         condition: service_healthy
@@ -68,6 +70,8 @@ services:
       SPRING_NEO4J_URI: bolt://blog-neo4j:7687
       SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
       SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
       blog-neo4j:
         condition: service_healthy
