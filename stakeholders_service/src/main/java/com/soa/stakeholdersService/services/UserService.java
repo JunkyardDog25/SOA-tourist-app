@@ -18,9 +18,12 @@ public class UserService {
         String authUserId = SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();
+        String email = (String) SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getDetails(); // 
 
         User user = userRepository.findByAuthUserId(authUserId)
-                .orElseThrow(() -> new UserNotFoundException("Profile not found"));
+                .orElseThrow(() -> new UserNotFoundException(email));
 
         return new ProfileResponseDto(
                 user.getUsername(),
