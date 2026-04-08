@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -24,9 +25,10 @@ public class JwtUtil {
         );
     }
 
-    public String generateToken(UserDetails userDetails) {
+    public String generateToken(UserDetails userDetails, String userId) {
         return Jwts.builder()
                 .subject(userDetails.getUsername())
+                .claim("userId", userId)
                 .claim("roles", userDetails.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList())
@@ -34,6 +36,17 @@ public class JwtUtil {
                 .expiration(new Date(System.currentTimeMillis() + jwtProperties.getExpirationMs()))
                 .signWith(getSigningKey())
                 .compact();
+    }
+    public String extractUserId(String token) {
+        return parseClaims(token).get("userId", String.class);
+    }
+
+    public List<String> extractRoles(String token) {
+        Object rolesObj = parseClaims(token).get("roles");
+        if (rolesObj instanceof List<?> roles) {
+            return roles.stream().map(Object::toString).toList();
+        }
+        return List.of();
     }
 
     public String extractUsername(String token) {
