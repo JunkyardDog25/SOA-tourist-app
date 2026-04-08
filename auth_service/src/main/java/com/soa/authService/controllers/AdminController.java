@@ -21,4 +21,11 @@ public class AdminController {
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
         return ResponseEntity.ok(adminUserService.getAllUsers());
     }
+    // AdminController.java
+    @PatchMapping("/users/{id}/block")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<Void> setBlockedStatus(@PathVariable String id,@RequestParam boolean blocked) {
+        adminUserService.setBlockedStatus(id, blocked);
+        return ResponseEntity.noContent().build();
+    }
 }

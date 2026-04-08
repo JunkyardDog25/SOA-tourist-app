@@ -1,15 +1,16 @@
 package com.soa.authService.services;
 
 import com.soa.authService.dtos.UserResponseDto;
+import com.soa.authService.exceptions.UserNotFoundException;
 import com.soa.authService.models.User;
 import com.soa.authService.repositories.UserRepository;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-
 @Service
 @RequiredArgsConstructor
 public class AdminUserService {
@@ -28,6 +29,13 @@ public class AdminUserService {
                 )
                 .map(this::mapToDto)
                 .toList();
+    }
+
+    public void setBlockedStatus(String userId, boolean blocked) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new UserNotFoundException(userId));
+        user.setBlocked(blocked);
+        userRepository.save(user);
     }
 
     private UserResponseDto mapToDto(User user) {

@@ -20,6 +20,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Getter
+@Setter
 public class User implements UserDetails {
     @Id
     @GeneratedValue(UUIDStringGenerator.class)

@@ -4,6 +4,7 @@ import com.soa.authService.configuration.JwtUtil;
 import com.soa.authService.dtos.AuthResponse;
 import com.soa.authService.dtos.LoginRequest;
 import com.soa.authService.dtos.RegisterRequest;
+import com.soa.authService.exceptions.AccountBlockedException;
 import com.soa.authService.models.User;
 import com.soa.authService.repositories.UserRepository;
 import com.soa.authService.utils.Role;
@@ -54,6 +55,9 @@ public class AuthService {
         );
 
         User user = (User) authentication.getPrincipal();
+        if (user.isBlocked()) {
+        throw new AccountBlockedException("Your account has been blocked by an administrator.");
+        }
         return new AuthResponse(jwtUtil.generateToken(user, user.getId()));
     }
 
