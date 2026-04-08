@@ -1,5 +1,6 @@
 package com.soa.authService.configuration;
 
+import com.soa.authService.models.User;
 import com.soa.authService.utils.JwtProperties;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -26,9 +27,11 @@ public class JwtUtil {
     }
 
     public String generateToken(UserDetails userDetails, String userId) {
+        User user = (User) userDetails;
         return Jwts.builder()
                 .subject(userDetails.getUsername())
                 .claim("userId", userId)
+                .claim("email", user.getEmail())
                 .claim("roles", userDetails.getAuthorities().stream()
                         .map(GrantedAuthority::getAuthority)
                         .toList())
@@ -40,7 +43,9 @@ public class JwtUtil {
     public String extractUserId(String token) {
         return parseClaims(token).get("userId", String.class);
     }
-
+    public String extractEmail(String token) {
+        return parseClaims(token).get("email", String.class);
+    }
     public List<String> extractRoles(String token) {
         Object rolesObj = parseClaims(token).get("roles");
         if (rolesObj instanceof List<?> roles) {
