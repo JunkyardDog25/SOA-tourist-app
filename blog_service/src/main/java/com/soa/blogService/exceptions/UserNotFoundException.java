@@ -1,0 +1,7 @@
+package com.soa.blogService.exceptions;
+
+public class UserNotFoundException extends RuntimeException {
+    public UserNotFoundException(String email) {
+        super("User not found in database for email: " + email);
+    }
+}
