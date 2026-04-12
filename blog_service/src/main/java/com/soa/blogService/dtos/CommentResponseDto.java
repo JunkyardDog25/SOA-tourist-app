@@ -4,18 +4,15 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Getter
 @AllArgsConstructor
-public class BlogResponseDto {
+public class CommentResponseDto {
 
     private String id;
-    private String title;
-    private String description;
-    private LocalDateTime creationDate;
-    private List<String> imageUrls;
+    private String text;
     private String authorId;
     private String authorEmail;
-    private List<CommentResponseDto> comments;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 }

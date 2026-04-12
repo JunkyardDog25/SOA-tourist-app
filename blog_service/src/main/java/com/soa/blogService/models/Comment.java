@@ -6,35 +6,29 @@ import lombok.Setter;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
-import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.data.neo4j.core.support.UUIDStringGenerator;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
-@Node("Blog")
-@Getter @Setter
+@Node("Comment")
+@Getter
+@Setter
 @NoArgsConstructor
-public class Blog {
+public class Comment {
 
     @Id
     @GeneratedValue(UUIDStringGenerator.class)
     private String id;
 
-    private String title;
+    private String text;
 
-    private String description;
-
-    private LocalDateTime creationDate;
-
-    private List<String> imageUrls = new ArrayList<>();
-
+    /** ID korisnika iz JWT (isti kao u auth mikroservisu). */
     private String authorId;
 
-    /** Email autora iz JWT u trenutku kreiranja bloga. */
+    /** Email iz JWT u trenutku kreiranja (pregledna informacija o autoru). */
     private String authorEmail;
 
-    @Relationship(type = "HAS_COMMENT", direction = Relationship.Direction.OUTGOING)
-    private List<Comment> comments = new ArrayList<>();
+    private LocalDateTime createdAt;
+
+    private LocalDateTime updatedAt;
 }
