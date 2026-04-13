@@ -11,7 +11,9 @@ import org.springframework.data.neo4j.core.support.UUIDStringGenerator;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Node("Blog")
 @Getter @Setter
@@ -37,4 +39,7 @@ public class Blog {
 
     @Relationship(type = "HAS_COMMENT", direction = Relationship.Direction.OUTGOING)
     private List<Comment> comments = new ArrayList<>();
+
+    /** ID-jevi korisnika koji su lajkovali (najviše jednom po korisniku). */
+    private Set<String> likedUserIds = new HashSet<>();
 }

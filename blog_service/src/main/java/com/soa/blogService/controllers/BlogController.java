@@ -45,4 +45,14 @@ public class BlogController {
             @Valid @RequestBody UpdateCommentRequestDto dto) {
         return ResponseEntity.ok(blogService.updateComment(blogId, commentId, dto));
     }
+
+    @PostMapping("/{blogId}/likes")
+    public ResponseEntity<BlogResponseDto> likeBlog(@PathVariable String blogId) {
+        return ResponseEntity.ok(blogService.likeBlog(blogId));
+    }
+
+    @DeleteMapping("/{blogId}/likes")
+    public ResponseEntity<BlogResponseDto> unlikeBlog(@PathVariable String blogId) {
+        return ResponseEntity.ok(blogService.unlikeBlog(blogId));
+    }
 }
