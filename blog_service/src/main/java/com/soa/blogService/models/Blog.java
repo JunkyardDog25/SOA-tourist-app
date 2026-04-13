@@ -11,7 +11,9 @@ import org.springframework.data.neo4j.core.support.UUIDStringGenerator;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Node("Blog")
 @Getter @Setter
@@ -32,9 +34,10 @@ public class Blog {
 
     private String authorId;
 
-    /** Email autora iz JWT u trenutku kreiranja bloga. */
     private String authorEmail;
 
     @Relationship(type = "HAS_COMMENT", direction = Relationship.Direction.OUTGOING)
     private List<Comment> comments = new ArrayList<>();
+
+    private Set<String> likedUserIds = new HashSet<>();
 }
