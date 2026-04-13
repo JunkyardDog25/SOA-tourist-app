@@ -22,10 +22,8 @@ public class Comment {
 
     private String text;
 
-    /** ID korisnika iz JWT (isti kao u auth mikroservisu). */
     private String authorId;
 
-    /** Email iz JWT u trenutku kreiranja (pregledna informacija o autoru). */
     private String authorEmail;
 
     private LocalDateTime createdAt;

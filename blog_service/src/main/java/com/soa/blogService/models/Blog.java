@@ -34,12 +34,10 @@ public class Blog {
 
     private String authorId;
 
-    /** Email autora iz JWT u trenutku kreiranja bloga. */
     private String authorEmail;
 
     @Relationship(type = "HAS_COMMENT", direction = Relationship.Direction.OUTGOING)
     private List<Comment> comments = new ArrayList<>();
 
-    /** ID-jevi korisnika koji su lajkovali (najviše jednom po korisniku). */
     private Set<String> likedUserIds = new HashSet<>();
 }
