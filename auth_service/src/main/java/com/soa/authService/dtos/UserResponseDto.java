@@ -2,17 +2,20 @@ package com.soa.authService.dtos;
 
 import com.soa.authService.utils.Role;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class UserResponseDto {
-    private String id;
-    private String username;
-    private String email;
-    private Role role;
-    private boolean blocked;
+@Getter
+@RequiredArgsConstructor
+public final class UserResponseDto {
+    
+    private final String id;
+
+    private final String username;
+    
+    private final String email;
+    
+    private final Role role;
+    
+    private final boolean blocked;
 }

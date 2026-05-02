@@ -81,9 +81,8 @@ public class AuthService {
 
         User user = (User) authentication.getPrincipal();
         if (user.isBlocked()) {
-        throw new AccountBlockedException("Your account has been blocked by an administrator.");
+            throw new AccountBlockedException("Your account has been blocked by an administrator.");
         }
         return new AuthResponse(jwtUtil.generateToken(user, user.getId()));
     }
-
 }
