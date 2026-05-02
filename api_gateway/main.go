@@ -1,20 +1,13 @@
 package main
 
 import (
+	"api-gateway/config"
 	"log"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"os"
 	"strings"
 )
-
-func getEnv(key, fallback string) string {
-	if val := os.Getenv(key); val != "" {
-		return val
-	}
-	return fallback
-}
 
 func makeProxy(target string) http.Handler {
 	url, _ := url.Parse(target)
@@ -22,13 +15,11 @@ func makeProxy(target string) http.Handler {
 }
 
 func main() {
-	stakeholdersURL := getEnv("STAKEHOLDERS_SERVICE_URL", "http://localhost:8080")
-	authURL := getEnv("AUTH_SERVICE_URL", "http://localhost:8081")
-	blogURL := getEnv("BLOG_SERVICE_URL", "http://localhost:8082")
+	cfg := config.LoadConfig()
 
-	authProxy := makeProxy(authURL)
-	blogProxy := makeProxy(blogURL)
-	stakeholdersProxy := makeProxy(stakeholdersURL)
+	stakeholdersProxy := makeProxy(cfg.StakeholdersServiceURL)
+	authProxy := makeProxy(cfg.AuthServiceURL)
+	blogProxy := makeProxy(cfg.BlogServiceURL)
 
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
@@ -51,6 +42,6 @@ func main() {
 		}
 	})
 
-	log.Println("API Gateway running on :8000")
-	log.Fatal(http.ListenAndServe(":8000", nil))
+	log.Printf("API Gateway running on :%s", cfg.Port)
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
 }
