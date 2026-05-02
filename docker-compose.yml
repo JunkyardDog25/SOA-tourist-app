@@ -1,6 +1,22 @@
-version: "3.9"
-
 services:
+  # ── API Gateway ───────────────────────────────────────────────────────────────
+  api-gateway:
+    build: ./api_gateway
+    container_name: api-gateway
+    ports:
+      - "8000:8000"           # jedina ulazna tačka sa hosta
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      AUTH_SERVICE_URL: http://auth-service:8080
+      BLOG_SERVICE_URL: http://blog-service:8080
+      STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080
+    depends_on:
+      - auth-service
+      - blog-service
+      - stakeholders-service
+    networks:
+      - shared-net             # shared-net je dovoljan — svi servisi su tu
+
   # ── Neo4j za Stakeholders servis ─────────────────────────────────────────────
   stakeholders-neo4j:
     image: neo4j:5
@@ -8,8 +24,8 @@ services:
     environment:
       NEO4J_AUTH: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}/${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
     ports:
-      - "7474:7474" # Neo4j Browser
-      - "7687:7687" # Bolt
+      - "7474:7474"
+      - "7687:7687"
     volumes:
       - stakeholders-neo4j-data:/data
     networks:
@@ -25,8 +41,6 @@ services:
   stakeholders-service:
     build: ./stakeholders_service
     container_name: stakeholders-service
-    ports:
-      - "8080:8080" # Dostupan klijentu sa hosta na :8080
     environment:
       SPRING_NEO4J_URI: bolt://stakeholders-neo4j:7687
       SPRING_NEO4J_AUTHENTICATION_USERNAME: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}
@@ -37,8 +51,8 @@ services:
       stakeholders-neo4j:
         condition: service_healthy
     networks:
-      - stakeholders-net # Komunicira sa svojom Neo4j bazom
-      - shared-net # Dostupan blog servisu ako je potrebno
+      - stakeholders-net
+      - shared-net
 
   # ── Neo4j za Blog servis ─────────────────────────────────────────────────────
   blog-neo4j:
@@ -47,8 +61,8 @@ services:
     environment:
       NEO4J_AUTH: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}/${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
     ports:
-      - "7475:7474" # Neo4j Browser (drugačiji host port jer 7474 zauzet)
-      - "7688:7687" # Bolt (drugačiji host port jer 7687 zauzet)
+      - "7475:7474"
+      - "7688:7687"
     volumes:
       - blog-neo4j-data:/data
     networks:
@@ -64,8 +78,6 @@ services:
   blog-service:
     build: ./blog_service
     container_name: blog-service
-    ports:
-      - "8082:8080" # Dostupan klijentu sa hosta na :8082
     environment:
       SPRING_NEO4J_URI: bolt://blog-neo4j:7687
       SPRING_NEO4J_AUTHENTICATION_USERNAME: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}
@@ -76,8 +88,8 @@ services:
       blog-neo4j:
         condition: service_healthy
     networks:
-      - blog-net # Komunicira sa svojom Neo4j bazom
-      - shared-net # Dostupan stakeholders servisu ako je potrebno
+      - blog-net
+      - shared-net
 
   # ── Neo4j za Auth servis ──────────────────────────────────────────────────────
   auth-neo4j:
@@ -103,8 +115,6 @@ services:
   auth-service:
     build: ./auth_service
     container_name: auth-service
-    ports:
-      - "8081:8080"
     environment:
       SPRING_NEO4J_URI: bolt://auth-neo4j:7687
       SPRING_NEO4J_AUTHENTICATION_USERNAME: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}
@@ -124,7 +134,7 @@ volumes:
   auth-neo4j-data:
 
 networks:
-  stakeholders-net: # Izolovana mreža: stakeholders-service <-> stakeholders-neo4j
-  blog-net: # Izolovana mreža: blog-service <-> blog-neo4j
-  auth-net: # Izolovana mreža: auth-service <-> auth-neo4j
-  shared-net: # Zajednička mreža: servisi međusobno komuniciraju
+  stakeholders-net:
+  blog-net:
+  auth-net:
+  shared-net:
