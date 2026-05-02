@@ -2,6 +2,7 @@ package main
 
 import (
 	"api-gateway/config"
+	"api-gateway/middleware"
 	"log"
 	"net/http"
 	"net/http/httputil"
@@ -17,11 +18,13 @@ func makeProxy(target string) http.Handler {
 func main() {
 	cfg := config.LoadConfig()
 
-	stakeholdersProxy := makeProxy(cfg.StakeholdersServiceURL)
 	authProxy := makeProxy(cfg.AuthServiceURL)
 	blogProxy := makeProxy(cfg.BlogServiceURL)
+	stakeholdersProxy := makeProxy(cfg.StakeholdersServiceURL)
 
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+	mux := http.NewServeMux()
+
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
 		path := r.URL.Path
 
 		switch {
@@ -42,6 +45,9 @@ func main() {
 		}
 	})
 
+	// Middleware stack
+	handler := middleware.JWTAuth(cfg.JWTSecret)(mux)
+
 	log.Printf("API Gateway running on :%s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, nil))
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, handler))
 }
