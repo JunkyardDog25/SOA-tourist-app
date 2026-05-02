@@ -1,10 +1,16 @@
 package com.soa.authService.dtos;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.Data;
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
-@Data
-public class LoginRequest {
-    @NotBlank private String email;
-    @NotBlank private String password;
+@Getter
+@RequiredArgsConstructor
+public final class LoginRequest {
+    
+    @NotBlank
+    private final String email;
+    
+    @NotBlank
+    private final String password;
 }

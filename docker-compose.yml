@@ -121,6 +121,7 @@ services:
       SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080/api/stakeholders
     depends_on:
       auth-neo4j:
         condition: service_healthy

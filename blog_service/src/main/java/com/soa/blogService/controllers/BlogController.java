@@ -8,6 +8,9 @@ import com.soa.blogService.dtos.UpdateCommentRequestDto;
 import com.soa.blogService.services.BlogService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,12 +21,17 @@ public class BlogController {
 
     private final BlogService blogService;
 
+    @GetMapping()
+    public ResponseEntity<List<BlogResponseDto>> getAllBlogs() {
+        return ResponseEntity.ok(blogService.getAllBlogs());
+    }
+
     @GetMapping("/{blogId}")
     public ResponseEntity<BlogResponseDto> getBlog(@PathVariable String blogId) {
         return ResponseEntity.ok(blogService.getBlogById(blogId));
     }
 
-    @PostMapping
+    @PostMapping("/create")
     public ResponseEntity<BlogResponseDto> createBlog(@Valid @RequestBody CreateBlogRequestDto blogRequestDto) {
         BlogResponseDto response = blogService.createBlog(blogRequestDto);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);

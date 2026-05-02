@@ -36,11 +36,11 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/users/me").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/blogs").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/blogs/*/comments").authenticated()
-                .requestMatchers(HttpMethod.PUT, "/api/blogs/*/comments/*").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/blogs/*/likes").authenticated()
-                .requestMatchers(HttpMethod.DELETE, "/api/blogs/*/likes").authenticated()
+                .requestMatchers(HttpMethod.POST, "/create").authenticated()
+                .requestMatchers(HttpMethod.POST, "/*/comments").authenticated()
+                .requestMatchers(HttpMethod.PUT, "/*/comments/*").authenticated()
+                .requestMatchers(HttpMethod.POST, "/*/likes").authenticated()
+                .requestMatchers(HttpMethod.DELETE, "/*/likes").authenticated()
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

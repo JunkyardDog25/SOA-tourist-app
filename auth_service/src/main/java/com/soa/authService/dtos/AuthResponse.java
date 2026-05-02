@@ -1,10 +1,11 @@
 package com.soa.authService.dtos;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
-public class AuthResponse {
-    private String token;
+@RequiredArgsConstructor
+public final class AuthResponse {
+    
+    private final String token;
 }
