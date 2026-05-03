@@ -19,15 +19,20 @@ public class AdminUserService {
 
     public List<UserResponseDto> getAllUsers() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentUsernameOrEmail = authentication.getName();
-
+        String currentEmail = authentication.getName();
+        
         return userRepository.findAll()
                 .stream()
                 .filter(user ->
-                        !user.getUsername().equals(currentUsernameOrEmail) &&
-                        !user.getEmail().equals(currentUsernameOrEmail)
+                        !user.getEmail().equals(currentEmail)
                 )
-                .map(this::mapToDto)
+                .map(user -> new UserResponseDto(
+                        user.getId(),
+                        user.getUsername(),
+                        user.getEmail(),
+                        user.getRole(),
+                        user.isBlocked()
+                ))
                 .toList();
     }
 
@@ -35,16 +40,7 @@ public class AdminUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.setBlocked(blocked);
+        
         userRepository.save(user);
-    }
-
-    private UserResponseDto mapToDto(User user) {
-        return new UserResponseDto(
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole(),
-                user.isBlocked()
-        );
     }
 }

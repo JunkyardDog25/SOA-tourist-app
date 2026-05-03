@@ -16,13 +16,12 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-@Node( "User")
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Getter
-@Setter
+@Node( "User")
+@Getter @Setter
+@AllArgsConstructor @NoArgsConstructor
 public class User implements UserDetails {
+
     @Id
     @GeneratedValue(UUIDStringGenerator.class)
     private String id;
@@ -60,6 +59,7 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true; // osim ako imaš posebnu logiku za enable/disable
     }
+
     @Override
     public boolean isCredentialsNonExpired() {
         return true;

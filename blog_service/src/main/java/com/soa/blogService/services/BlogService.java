@@ -33,6 +33,14 @@ public class BlogService {
 
     private final BlogRepository blogRepository;
 
+    public List<BlogResponseDto> getAllBlogs() {
+        List<Blog> blogs = blogRepository.findAll();
+        return blogs.stream()
+                .sorted(Comparator.comparing(Blog::getCreationDate, Comparator.nullsLast(Comparator.reverseOrder())))
+                .map(this::mapToDto)
+                .toList();
+    }
+
     public BlogResponseDto createBlog(CreateBlogRequestDto blogRequestDto) {
         String authorId = currentUserId();
         String authorEmail = currentUserEmailOrNull();
