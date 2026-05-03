@@ -22,7 +22,7 @@ services:
     image: neo4j:5
     container_name: stakeholders-neo4j
     environment:
-      NEO4J_AUTH: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}/${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
     ports:
       - "7474:7474"
       - "7687:7687"
@@ -42,9 +42,9 @@ services:
     build: ./stakeholders_service
     container_name: stakeholders-service
     environment:
-      SPRING_NEO4J_URI: bolt://stakeholders-neo4j:7687
-      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}
-      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
+      NEO4J_URI: bolt://stakeholders-neo4j:7687
+      NEO4J_USERNAME: ${NEO4J_USERNAME}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
@@ -59,7 +59,7 @@ services:
     image: neo4j:5
     container_name: blog-neo4j
     environment:
-      NEO4J_AUTH: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}/${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
     ports:
       - "7475:7474"
       - "7688:7687"
@@ -79,9 +79,9 @@ services:
     build: ./blog_service
     container_name: blog-service
     environment:
-      SPRING_NEO4J_URI: bolt://blog-neo4j:7687
-      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}
-      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
+      NEO4J_URI: bolt://blog-neo4j:7687
+      NEO4J_USERNAME: ${NEO4J_USERNAME}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
     depends_on:
@@ -96,7 +96,7 @@ services:
     image: neo4j:5
     container_name: auth-neo4j
     environment:
-      NEO4J_AUTH: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}/${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
     ports:
       - "7476:7474"
       - "7689:7687"
@@ -116,9 +116,9 @@ services:
     build: ./auth_service
     container_name: auth-service
     environment:
-      SPRING_NEO4J_URI: bolt://auth-neo4j:7687
-      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${SPRING_NEO4J_AUTHENTICATION_USERNAME}
-      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${SPRING_NEO4J_AUTHENTICATION_PASSWORD}
+      NEO4J_URI: bolt://auth-neo4j:7687
+      NEO4J_USERNAME: ${NEO4J_USERNAME}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080/api/stakeholders
@@ -129,13 +129,52 @@ services:
       - auth-net
       - shared-net
 
+  # ── Neo4j za Followers servis ──────────────────────────────────────────────────────
+  followers-neo4j:
+    image: neo4j:5
+    container_name: followers-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+    ports:
+      - "7477:7474"
+      - "7690:7687"
+    volumes:
+      - followers-neo4j-data:/data
+    networks:
+      - followers-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Followers servis ───────────────────────────────────────────────────────────────
+  followers-service:
+    build: ./followers_service
+    container_name: followers-service
+    environment:
+      NEO4J_URI: bolt://followers-neo4j:7687
+      NEO4J_USERNAME: ${NEO4J_USERNAME}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+    depends_on:
+      followers-neo4j:
+        condition: service_healthy
+    networks:
+      - followers-net
+      - shared-net
+
 volumes:
   stakeholders-neo4j-data:
   blog-neo4j-data:
   auth-neo4j-data:
+  followers-neo4j-data:
 
 networks:
   stakeholders-net:
   blog-net:
   auth-net:
+  followers-net:
   shared-net:
