@@ -4,7 +4,7 @@ import com.soa.authService.configuration.JwtUtil;
 import com.soa.authService.dtos.AuthResponse;
 import com.soa.authService.dtos.LoginRequest;
 import com.soa.authService.dtos.RegisterRequest;
-import com.soa.authService.dtos.ProvisionStakeholderUserRequest;
+import com.soa.authService.dtos.SyncAuthUser;
 import com.soa.authService.exceptions.AccountBlockedException;
 import com.soa.authService.models.User;
 import com.soa.authService.repositories.UserRepository;
@@ -53,14 +53,15 @@ public class AuthService {
         User savedUser = userRepository.save(user);
 
         try {
-            ProvisionStakeholderUserRequest provisionRequest = new ProvisionStakeholderUserRequest(
+            SyncAuthUser provisionRequest = new SyncAuthUser(
                     savedUser.getId(),
                     savedUser.getUsername(),
                     savedUser.getEmail(),
                     savedUser.getRole().name()
             );
+
             new RestTemplate().postForEntity(
-                    stakeholdersServiceUrl + "/internal/users",
+                    stakeholdersServiceUrl + "/sync/user",
                     provisionRequest,
                     Void.class
             );
@@ -83,6 +84,7 @@ public class AuthService {
         if (user.isBlocked()) {
             throw new AccountBlockedException("Your account has been blocked by an administrator.");
         }
+        
         return new AuthResponse(jwtUtil.generateToken(user, user.getId()));
     }
 }

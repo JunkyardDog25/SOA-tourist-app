@@ -1,15 +1,17 @@
 package com.soa.stakeholdersService.dtos;
 
 import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.RequiredArgsConstructor;
 
-@Getter @Setter
-@NoArgsConstructor
-public class UpdateProfileDto {
-    private String firstName;
-    private String lastName;
-    private String profileImageUrl;
-    private String biography;
-    private String motto;
+@Getter
+@RequiredArgsConstructor
+public final class UpdateProfileDto {
+
+    private final String firstName;
+    
+    private final String lastName;
+    
+    private final String profileImageUrl;
+    
+    private final String biography;
 }
