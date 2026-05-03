@@ -4,10 +4,6 @@ package com.soa.authService.models;
 import java.util.Collection;
 import java.util.List;
 
-
-import com.soa.authService.utils.Role;
-import jakarta.validation.constraints.NotBlank;
-import lombok.*;
 import org.springframework.data.neo4j.core.schema.GeneratedValue;
 import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
@@ -15,6 +11,15 @@ import org.springframework.data.neo4j.core.support.UUIDStringGenerator;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
+import com.soa.authService.utils.Role;
+
+import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 @Data
 @Node( "User")
@@ -37,7 +42,7 @@ public class User implements UserDetails {
 
     private Role role;
     
-    private boolean blocked=false;
+    private boolean blocked;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -52,17 +57,16 @@ public class User implements UserDetails {
 
     @Override
     public boolean isAccountNonLocked() {
-        return !blocked; // ← ovo je semantički ispravno
+        return true; // ← ovo je semantički ispravno
     }
 
     @Override
     public boolean isEnabled() {
-        return true; // osim ako imaš posebnu logiku za enable/disable
+        return !blocked; // osim ako imaš posebnu logiku za enable/disable
     }
 
     @Override
     public boolean isCredentialsNonExpired() {
         return true;
     }
-
 }

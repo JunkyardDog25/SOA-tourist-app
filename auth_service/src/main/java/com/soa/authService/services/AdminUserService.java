@@ -1,16 +1,17 @@
 package com.soa.authService.services;
 
+import java.util.List;
+
+import org.springframework.stereotype.Service;
+
 import com.soa.authService.dtos.UserResponseDto;
 import com.soa.authService.exceptions.UserNotFoundException;
 import com.soa.authService.models.User;
 import com.soa.authService.repositories.UserRepository;
+import com.soa.authService.utils.Role;
+
 import lombok.RequiredArgsConstructor;
 
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.stereotype.Service;
-
-import java.util.List;
 @Service
 @RequiredArgsConstructor
 public class AdminUserService {
@@ -18,13 +19,10 @@ public class AdminUserService {
     private final UserRepository userRepository;
 
     public List<UserResponseDto> getAllUsers() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String currentEmail = authentication.getName();
-        
         return userRepository.findAll()
                 .stream()
                 .filter(user ->
-                        !user.getEmail().equals(currentEmail)
+                        !user.getRole().equals(Role.ADMIN)
                 )
                 .map(user -> new UserResponseDto(
                         user.getId(),
@@ -40,7 +38,8 @@ public class AdminUserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
         user.setBlocked(blocked);
-        
+        user.isEnabled();
+
         userRepository.save(user);
     }
 }

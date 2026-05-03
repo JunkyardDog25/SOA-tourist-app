@@ -1,10 +1,11 @@
 package com.soa.authService.repositories;
 
-import com.soa.authService.models.User;
+import java.util.Optional;
+
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.soa.authService.models.User;
 
 @Repository
 public interface UserRepository extends Neo4jRepository<User, String> {
