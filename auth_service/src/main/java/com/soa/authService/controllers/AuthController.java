@@ -1,15 +1,17 @@
 package com.soa.authService.controllers;
 
-import com.soa.authService.dtos.AuthResponse;
-import com.soa.authService.dtos.LoginRequest;
-import com.soa.authService.dtos.RegisterRequest;
-import com.soa.authService.services.AuthService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.soa.authService.dtos.AuthResponse;
+import com.soa.authService.dtos.LoginRequest;
+import com.soa.authService.dtos.RegisterRequest;
+import com.soa.authService.services.AuthService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequiredArgsConstructor

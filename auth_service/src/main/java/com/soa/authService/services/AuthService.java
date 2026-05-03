@@ -1,5 +1,13 @@
 package com.soa.authService.services;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.client.RestTemplate;
+
 import com.soa.authService.configuration.JwtUtil;
 import com.soa.authService.dtos.AuthResponse;
 import com.soa.authService.dtos.LoginRequest;
@@ -9,14 +17,8 @@ import com.soa.authService.exceptions.AccountBlockedException;
 import com.soa.authService.models.User;
 import com.soa.authService.repositories.UserRepository;
 import com.soa.authService.utils.Role;
+
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.client.RestTemplate;
 
 @Service
 @RequiredArgsConstructor
