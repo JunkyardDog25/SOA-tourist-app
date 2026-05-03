@@ -3,51 +3,29 @@ package main
 import (
 	"api-gateway/config"
 	"api-gateway/middleware"
+	"api-gateway/proxy"
 	"log"
 	"net/http"
-	"net/http/httputil"
-	"net/url"
-	"strings"
-)
 
-func makeProxy(target string) http.Handler {
-	url, _ := url.Parse(target)
-	return httputil.NewSingleHostReverseProxy(url)
-}
+	"github.com/go-chi/chi/v5"
+)
 
 func main() {
 	cfg := config.LoadConfig()
 
-	authProxy := makeProxy(cfg.AuthServiceURL)
-	blogProxy := makeProxy(cfg.BlogServiceURL)
-	stakeholdersProxy := makeProxy(cfg.StakeholdersServiceURL)
+	authProxy := proxy.New(cfg.AuthServiceURL)
+	blogProxy := proxy.New(cfg.BlogServiceURL)
+	stakeholdersProxy := proxy.New(cfg.StakeholdersServiceURL)
 
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		path := r.URL.Path
+	r.Use(middleware.Logger)
+	r.Use(middleware.JWTAuth(cfg.JWTSecret))
 
-		switch {
-		case strings.HasPrefix(path, "/api/auth"):
-			log.Printf("→ AUTH: %s %s", r.Method, path)
-			authProxy.ServeHTTP(w, r)
-
-		case strings.HasPrefix(path, "/api/blogs"):
-			log.Printf("→ BLOG: %s %s", r.Method, path)
-			blogProxy.ServeHTTP(w, r)
-
-		case strings.HasPrefix(path, "/api/stakeholders"):
-			log.Printf("→ STAKEHOLDERS: %s %s", r.Method, path)
-			stakeholdersProxy.ServeHTTP(w, r)
-
-		default:
-			http.Error(w, "route not found", http.StatusNotFound)
-		}
-	})
-
-	// Middleware stack
-	handler := middleware.JWTAuth(cfg.JWTSecret)(mux)
+	proxy.MountProxy(r, "/api/auth", authProxy)
+	proxy.MountProxy(r, "/api/blogs", blogProxy)
+	proxy.MountProxy(r, "/api/stakeholders", stakeholdersProxy)
 
 	log.Printf("API Gateway running on :%s", cfg.Port)
-	log.Fatal(http.ListenAndServe(":"+cfg.Port, handler))
+	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))
 }
