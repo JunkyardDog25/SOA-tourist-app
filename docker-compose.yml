@@ -10,10 +10,12 @@ services:
       AUTH_SERVICE_URL: http://auth-service:8080
       BLOG_SERVICE_URL: http://blog-service:8080
       STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080
+      FOLLOWERS_SERVICE_URL: http://followers-service:8080
     depends_on:
       - auth-service
       - blog-service
       - stakeholders-service
+      - followers-service
     networks:
       - shared-net             # shared-net je dovoljan — svi servisi su tu
 
