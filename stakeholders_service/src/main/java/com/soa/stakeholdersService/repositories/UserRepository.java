@@ -1,13 +1,16 @@
 package com.soa.stakeholdersService.repositories;
 
-import com.soa.stakeholdersService.models.User;
+import java.util.Optional;
+
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.Optional;
+import com.soa.stakeholdersService.models.User;
 
 @Repository
 public interface UserRepository extends Neo4jRepository<User, String> {
-    Optional<User> findByAuthUserId(String authUserId);
+
+    Optional<User> findById(String id);
+    
     Optional<User> findByEmail(String email);
 }

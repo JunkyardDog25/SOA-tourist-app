@@ -1,18 +1,24 @@
 package com.soa.stakeholdersService.dtos;
 
-import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 @Getter
-@AllArgsConstructor
-public class ProfileResponseDto {
-    private String username;
-    private String email;
-    private String firstName;
-    private String lastName;
-    private String profileImageUrl;
-    private String biography;
-    private String motto;
+@RequiredArgsConstructor
+public final class ProfileResponseDto {
+
+    private final String username;
+
+    private final String email;
+    
+    private final String firstName;
+    
+    private final String lastName;
+    
+    private final String profileImageUrl;
+    
+    private final String biography;
+
 }
 //Ručno dodavanje korisnika u bazu podataka (Neo4j) za testiranje profila korisnika
 //Ovaj Cypher upit kreira čvor "User" sa svim potrebnim atributima za testiranje funkcionalnosti profila korisnika u aplikaciji.
