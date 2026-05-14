@@ -29,7 +29,7 @@ public class SecurityConfig {
                 ex -> ex.authenticationEntryPoint(authEntryPoint)
             )
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/hello").authenticated()
+                .requestMatchers("/follow/**").authenticated()
                 .anyRequest().permitAll()
             )
             .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
