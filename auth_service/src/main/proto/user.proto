@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package user;
+
+option java_package = "com.soa.grpc";
+option java_outer_classname = "UserProto";
+option java_multiple_files = true;
+
+service UserService {
+  rpc GetUserById (GetUserByIdRequest) returns (GetUserByIdResponse);
+}
+
+message GetUserByIdRequest {
+  string userId = 1;
+}
+
+message GetUserByIdResponse {
+  string userId = 1;
+  string username = 2;
+  string email = 3;
+  bool found = 4;
+}
