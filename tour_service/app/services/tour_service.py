@@ -16,7 +16,7 @@ def _tour_to_response(tour: dict) -> dict:
 
 # ─── Tour CRUD ───────────────────────────────────────────────────
 
-async def create_tour(data: TourCreate, author_id: int) -> dict:
+async def create_tour(data: TourCreate, author_id: str) -> dict:
     db = get_db()
     now = datetime.now(timezone.utc)
 
@@ -38,7 +38,7 @@ async def create_tour(data: TourCreate, author_id: int) -> dict:
     return _tour_to_response(tour_doc)
 
 
-async def get_tours_by_author(author_id: int) -> list[dict]:
+async def get_tours_by_author(author_id: str) -> list[dict]:
     db = get_db()
     cursor = db.tours.find({"author_id": author_id})
     tours = await cursor.to_list(length=100)
@@ -58,7 +58,7 @@ async def get_tour_by_id(tour_id: str) -> dict:
     return _tour_to_response(tour)
 
 
-async def update_tour(tour_id: str, data: TourUpdate, author_id: int) -> dict:
+async def update_tour(tour_id: str, data: TourUpdate, author_id: str) -> dict:
     db = get_db()
     tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
 
@@ -82,7 +82,7 @@ async def update_tour(tour_id: str, data: TourUpdate, author_id: int) -> dict:
     return await get_tour_by_id(tour_id)
 
 
-async def delete_tour(tour_id: str, author_id: int):
+async def delete_tour(tour_id: str, author_id: str):
     db = get_db()
     tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
 
@@ -106,7 +106,7 @@ async def get_all_published_tours() -> list[dict]:
 
 # ─── Keypoint operacije (ugnjezdene u Tour) ─────────────────────
 
-async def add_keypoint(tour_id: str, data: KeypointCreate, author_id: int) -> dict:
+async def add_keypoint(tour_id: str, data: KeypointCreate, author_id: str) -> dict:
     db = get_db()
     tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
 
@@ -135,7 +135,7 @@ async def add_keypoint(tour_id: str, data: KeypointCreate, author_id: int) -> di
 
 
 async def update_keypoint(
-    tour_id: str, keypoint_id: str, data: KeypointUpdate, author_id: int
+    tour_id: str, keypoint_id: str, data: KeypointUpdate, author_id: str
 ) -> dict:
     db = get_db()
     tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
@@ -161,7 +161,7 @@ async def update_keypoint(
     return await get_tour_by_id(tour_id)
 
 
-async def delete_keypoint(tour_id: str, keypoint_id: str, author_id: int):
+async def delete_keypoint(tour_id: str, keypoint_id: str, author_id: str):
     db = get_db()
     tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
 

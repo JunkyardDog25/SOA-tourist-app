@@ -32,8 +32,8 @@ app.add_middleware(
 )
 
 # Registracija ruta
-app.include_router(tour_router)
-app.include_router(review_router)
+app.include_router(tour_router,prefix="/api")
+app.include_router(review_router,prefix="/api")
 
 
 @app.get("/health")
