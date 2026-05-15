@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth import get_current_user, require_role, TokenData
 from app.models.tour import (
     TourCreate, TourUpdate, TourResponse,
@@ -41,8 +41,18 @@ async def get_tour(
     tour_id: str,
     current_user: TokenData = Depends(get_current_user),
 ):
-    """Dohvati jednu turu po ID-u."""
-    return await tour_service.get_tour_by_id(tour_id)
+    """Dohvati jednu turu po ID-u. Draft ture vidi samo autor ili admin."""
+    tour = await tour_service.get_tour_by_id(tour_id)
+    if (
+        tour["status"] != "published"
+        and tour["author_id"] != current_user.user_id
+        and "ROLE_ADMIN" not in current_user.roles
+    ):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have access to this tour",
+        )
+    return tour
 
 
 @router.put("/{tour_id}", response_model=TourResponse)

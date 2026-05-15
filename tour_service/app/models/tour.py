@@ -19,11 +19,11 @@ class TourStatus(str, Enum):
 # ─── Keypoint (ugnjezden u Tour dokument) ────────────────────────
 
 class KeypointCreate(BaseModel):
-    name: str
-    description: str
-    latitude: float
-    longitude: float
-    image_url: Optional[str] = None
+    name: str = Field(min_length=1, max_length=200, description="Naziv ključne tačke (npr. Muzej, Park, Spomenik)")
+    description: str = Field(min_length=1, max_length=2000, description="Detaljni opis ključne tačke")
+    latitude: float = Field(ge=-90, le=90, description="Geografska širina (-90 do 90)")
+    longitude: float = Field(ge=-180, le=180, description="Geografska dužina (-180 do 180)")
+    image_url: str = Field(min_length=1, max_length=1000, description="URL slike ključne tačke")
 
 
 class KeypointResponse(BaseModel):
@@ -32,15 +32,15 @@ class KeypointResponse(BaseModel):
     description: str
     latitude: float
     longitude: float
-    image_url: Optional[str] = None
+    image_url: str
 
 
 class KeypointUpdate(BaseModel):
-    name: Optional[str] = None
-    description: Optional[str] = None
-    latitude: Optional[float] = None
-    longitude: Optional[float] = None
-    image_url: Optional[str] = None
+    name: Optional[str] = Field(default=None, min_length=1, max_length=200)
+    description: Optional[str] = Field(default=None, min_length=1, max_length=2000)
+    latitude: Optional[float] = Field(default=None, ge=-90, le=90)
+    longitude: Optional[float] = Field(default=None, ge=-180, le=180)
+    image_url: Optional[str] = Field(default=None, min_length=1, max_length=1000)
 
 
 # ─── Tour ────────────────────────────────────────────────────────
