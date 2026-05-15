@@ -1,4 +1,5 @@
 from bson import ObjectId
+from bson.errors import InvalidId
 from datetime import datetime, timezone
 from uuid import uuid4
 from fastapi import HTTPException, status
@@ -12,6 +13,14 @@ def _tour_to_response(tour: dict) -> dict:
     for kp in tour.get("keypoints", []):
         kp.setdefault("id", str(uuid4()))
     return tour
+
+
+def _parse_tour_id(tour_id: str) -> ObjectId:
+    """Validira i konvertuje tour_id string u MongoDB ObjectId."""
+    try:
+        return ObjectId(tour_id)
+    except (InvalidId, TypeError):
+        raise HTTPException(status_code=400, detail="Invalid tour ID format")
 
 
 # ─── Tour CRUD ───────────────────────────────────────────────────
@@ -47,10 +56,8 @@ async def get_tours_by_author(author_id: str) -> list[dict]:
 
 async def get_tour_by_id(tour_id: str) -> dict:
     db = get_db()
-    try:
-        tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid tour ID format")
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
@@ -60,7 +67,8 @@ async def get_tour_by_id(tour_id: str) -> dict:
 
 async def update_tour(tour_id: str, data: TourUpdate, author_id: str) -> dict:
     db = get_db()
-    tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
@@ -76,7 +84,7 @@ async def update_tour(tour_id: str, data: TourUpdate, author_id: str) -> dict:
     update_data["updated_at"] = datetime.now(timezone.utc)
 
     await db.tours.update_one(
-        {"_id": ObjectId(tour_id)},
+        {"_id": tour_obj_id},
         {"$set": update_data},
     )
     return await get_tour_by_id(tour_id)
@@ -84,14 +92,15 @@ async def update_tour(tour_id: str, data: TourUpdate, author_id: str) -> dict:
 
 async def delete_tour(tour_id: str, author_id: str):
     db = get_db()
-    tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
     if tour["author_id"] != author_id:
         raise HTTPException(status_code=403, detail="Not your tour")
 
-    await db.tours.delete_one({"_id": ObjectId(tour_id)})
+    await db.tours.delete_one({"_id": tour_obj_id})
     # Obrisi i sve recenzije za tu turu
     await db.reviews.delete_many({"tour_id": tour_id})
 
@@ -108,7 +117,8 @@ async def get_all_published_tours() -> list[dict]:
 
 async def add_keypoint(tour_id: str, data: KeypointCreate, author_id: str) -> dict:
     db = get_db()
-    tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
@@ -125,7 +135,7 @@ async def add_keypoint(tour_id: str, data: KeypointCreate, author_id: str) -> di
     }
 
     await db.tours.update_one(
-        {"_id": ObjectId(tour_id)},
+        {"_id": tour_obj_id},
         {
             "$push": {"keypoints": keypoint},
             "$set": {"updated_at": datetime.now(timezone.utc)},
@@ -138,7 +148,8 @@ async def update_keypoint(
     tour_id: str, keypoint_id: str, data: KeypointUpdate, author_id: str
 ) -> dict:
     db = get_db()
-    tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
@@ -151,7 +162,7 @@ async def update_keypoint(
     update_fields["updated_at"] = datetime.now(timezone.utc)
 
     result = await db.tours.update_one(
-        {"_id": ObjectId(tour_id), "keypoints.id": keypoint_id},
+        {"_id": tour_obj_id, "keypoints.id": keypoint_id},
         {"$set": update_fields},
     )
 
@@ -163,7 +174,8 @@ async def update_keypoint(
 
 async def delete_keypoint(tour_id: str, keypoint_id: str, author_id: str):
     db = get_db()
-    tour = await db.tours.find_one({"_id": ObjectId(tour_id)})
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
@@ -171,7 +183,7 @@ async def delete_keypoint(tour_id: str, keypoint_id: str, author_id: str):
         raise HTTPException(status_code=403, detail="Not your tour")
 
     result = await db.tours.update_one(
-        {"_id": ObjectId(tour_id)},
+        {"_id": tour_obj_id},
         {
             "$pull": {"keypoints": {"id": keypoint_id}},
             "$set": {"updated_at": datetime.now(timezone.utc)},
