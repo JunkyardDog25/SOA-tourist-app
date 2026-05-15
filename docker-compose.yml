@@ -4,7 +4,7 @@ services:
     build: ./api_gateway
     container_name: api-gateway
     ports:
-      - "8000:8000" # jedina ulazna tačka sa hosta
+      - "8000:8000"
     environment:
       JWT_SECRET: ${JWT_SECRET}
       AUTH_SERVICE_URL: http://auth-service:8080
@@ -19,7 +19,7 @@ services:
       - followers-service
       - tour-service
     networks:
-      - shared-net # shared-net je dovoljan — svi servisi su tu
+      - shared-net
 
   # ── Neo4j za Stakeholders servis ─────────────────────────────────────────────
   stakeholders-neo4j:
@@ -193,6 +193,21 @@ services:
       timeout: 10s
       retries: 10
       start_period: 30s
+
+  # ── Mongo Express (Web UI za MongoDB) ─────────────────────────────────────────
+  mongo-express:
+    image: mongo-express:1
+    container_name: mongo-express
+    ports:
+      - "8088:8081"
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongo-tour:27017
+      ME_CONFIG_BASICAUTH: "false"
+    depends_on:
+      mongo-tour:
+        condition: service_healthy
+    networks:
+      - tour-net
 
   # ── Tour servis ───────────────────────────────────────────────────────────────
   tour-service:
