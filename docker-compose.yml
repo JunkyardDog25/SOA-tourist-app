@@ -4,20 +4,22 @@ services:
     build: ./api_gateway
     container_name: api-gateway
     ports:
-      - "8000:8000"           # jedina ulazna tačka sa hosta
+      - "8000:8000" # jedina ulazna tačka sa hosta
     environment:
       JWT_SECRET: ${JWT_SECRET}
       AUTH_SERVICE_URL: http://auth-service:8080
       BLOG_SERVICE_URL: http://blog-service:8080
       STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080
       FOLLOWERS_SERVICE_URL: http://followers-service:8080
+      TOUR_SERVICE_URL: http://tour-service:8084
     depends_on:
       - auth-service
       - blog-service
       - stakeholders-service
       - followers-service
+      - tour-service
     networks:
-      - shared-net             # shared-net je dovoljan — svi servisi su tu
+      - shared-net # shared-net je dovoljan — svi servisi su tu
 
   # ── Neo4j za Stakeholders servis ─────────────────────────────────────────────
   stakeholders-neo4j:
@@ -175,15 +177,49 @@ services:
       - followers-net
       - shared-net
 
+  # ── MongoDB za Tour servis ────────────────────────────────────────────────────
+  mongo-tour:
+    image: mongo:7
+    container_name: mongo-tour
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-tour-data:/data/db
+    networks:
+      - tour-net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Tour servis ───────────────────────────────────────────────────────────────
+  tour-service:
+    build: ./tour_service
+    container_name: tour-service
+    environment:
+      MONGO_URI: ${MONGO_URI}
+      MONGO_DB: ${MONGO_DB}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      mongo-tour:
+        condition: service_healthy
+    networks:
+      - tour-net
+      - shared-net
+
 volumes:
   stakeholders-neo4j-data:
   blog-neo4j-data:
   auth-neo4j-data:
   followers-neo4j-data:
+  mongo-tour-data:
 
 networks:
   stakeholders-net:
   blog-net:
   auth-net:
   followers-net:
+  tour-net:
   shared-net:
