@@ -1,6 +1,8 @@
 from bson import ObjectId
+from bson.errors import InvalidId
 from datetime import datetime, timezone
 from fastapi import HTTPException
+from pymongo.errors import DuplicateKeyError
 from app.database import get_db
 from app.models.review import ReviewCreate, ReviewUpdate
 
@@ -11,14 +13,18 @@ def _review_to_response(review: dict) -> dict:
     return review
 
 
-async def create_review(data: ReviewCreate, tourist_id: int, tourist_username: str) -> dict:
+def _parse_object_id(value: str, field_name: str) -> ObjectId:
+    try:
+        return ObjectId(value)
+    except (InvalidId, TypeError):
+        raise HTTPException(status_code=400, detail=f"Invalid {field_name} format")
+
+
+async def create_review(data: ReviewCreate, tourist_id: str, tourist_username: str) -> dict:
     db = get_db()
 
     # Proveri da li tura postoji
-    try:
-        tour = await db.tours.find_one({"_id": ObjectId(data.tour_id)})
-    except Exception:
-        raise HTTPException(status_code=400, detail="Invalid tour ID format")
+    tour = await db.tours.find_one({"_id": _parse_object_id(data.tour_id, "tour ID")})
 
     if not tour:
         raise HTTPException(status_code=404, detail="Tour not found")
@@ -48,7 +54,13 @@ async def create_review(data: ReviewCreate, tourist_id: int, tourist_username: s
         "images": data.images,
     }
 
-    result = await db.reviews.insert_one(review_doc)
+    try:
+        result = await db.reviews.insert_one(review_doc)
+    except DuplicateKeyError:
+        raise HTTPException(
+            status_code=409,
+            detail="You have already reviewed this tour",
+        )
     review_doc["_id"] = result.inserted_id
     return _review_to_response(review_doc)
 
@@ -85,9 +97,10 @@ async def get_tour_average_rating(tour_id: str) -> dict:
     }
 
 
-async def update_review(review_id: str, data: ReviewUpdate, tourist_id: int) -> dict:
+async def update_review(review_id: str, data: ReviewUpdate, tourist_id: str) -> dict:
     db = get_db()
-    review = await db.reviews.find_one({"_id": ObjectId(review_id)})
+    review_obj_id = _parse_object_id(review_id, "review ID")
+    review = await db.reviews.find_one({"_id": review_obj_id})
 
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
@@ -96,21 +109,22 @@ async def update_review(review_id: str, data: ReviewUpdate, tourist_id: int) -> 
 
     update_data = data.model_dump(exclude_none=True)
     await db.reviews.update_one(
-        {"_id": ObjectId(review_id)},
+        {"_id": review_obj_id},
         {"$set": update_data},
     )
 
-    updated = await db.reviews.find_one({"_id": ObjectId(review_id)})
+    updated = await db.reviews.find_one({"_id": review_obj_id})
     return _review_to_response(updated)
 
 
-async def delete_review(review_id: str, tourist_id: int):
+async def delete_review(review_id: str, tourist_id: str):
     db = get_db()
-    review = await db.reviews.find_one({"_id": ObjectId(review_id)})
+    review_obj_id = _parse_object_id(review_id, "review ID")
+    review = await db.reviews.find_one({"_id": review_obj_id})
 
     if not review:
         raise HTTPException(status_code=404, detail="Review not found")
     if review["tourist_id"] != tourist_id:
         raise HTTPException(status_code=403, detail="Not your review")
 
-    await db.reviews.delete_one({"_id": ObjectId(review_id)})
+    await db.reviews.delete_one({"_id": review_obj_id})

@@ -16,6 +16,11 @@ async def connect_to_mongo():
     await db.tours.create_index("tags")
     await db.reviews.create_index("tour_id")
     await db.reviews.create_index("tourist_id")
+    await db.reviews.create_index(
+        [("tour_id", 1), ("tourist_id", 1)],
+        unique=True,
+        name="uniq_tour_review_per_tourist",
+    )
 
     print(f"Connected to MongoDB: {settings.MONGO_DB}")
 
