@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from app.auth import get_current_user, TokenData
+from app.auth import get_current_user, require_role, TokenData
 from app.models.review import ReviewCreate, ReviewResponse, ReviewUpdate
 from app.services import review_service
 
@@ -9,7 +9,7 @@ router = APIRouter(prefix="/reviews", tags=["Reviews"])
 @router.post("", response_model=ReviewResponse, status_code=201)
 async def create_review(
     data: ReviewCreate,
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_role("ROLE_TOURIST")),
 ):
     """Turista ostavlja recenziju za turu (ocena 1-5, komentar, datum posete, slike)."""
     return await review_service.create_review(
@@ -39,7 +39,7 @@ async def get_tour_rating(
 async def update_review(
     review_id: str,
     data: ReviewUpdate,
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_role("ROLE_TOURIST")),
 ):
     """Turista azurira svoju recenziju."""
     return await review_service.update_review(
@@ -50,7 +50,7 @@ async def update_review(
 @router.delete("/{review_id}", status_code=204)
 async def delete_review(
     review_id: str,
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_role("ROLE_TOURIST")),
 ):
     """Turista brise svoju recenziju."""
     await review_service.delete_review(review_id, current_user.user_id)
