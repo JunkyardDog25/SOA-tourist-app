@@ -49,7 +49,7 @@ class TourCreate(BaseModel):
     title: str
     description: str
     difficulty: TourDifficulty
-    tags: list[str] = []
+    tags: list[str] = Field(default_factory=list)
 
 
 class TourUpdate(BaseModel):
@@ -63,13 +63,13 @@ class TourUpdate(BaseModel):
 
 class TourResponse(BaseModel):
     id: str
-    author_id: int
+    author_id: str
     title: str
     description: str
     difficulty: TourDifficulty
-    tags: list[str]
+    tags: list[str] = Field(default_factory=list)
     status: TourStatus
     price: float
-    keypoints: list[KeypointResponse] = []
+    keypoints: list[KeypointResponse] = Field(default_factory=list)
     created_at: datetime
     updated_at: datetime

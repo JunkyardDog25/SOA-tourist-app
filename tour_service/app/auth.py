@@ -12,7 +12,7 @@ class TokenData(BaseModel):
     user_id: str          # Neo4j string ID iz "userId" claim-a
     username: str         # iz "sub" claim-a
     email: str
-    roles: list[str]      # ["ROLE_AUTHOR", "ROLE_TOURIST", "ROLE_ADMIN"]
+    roles: list[str]      # ["ROLE_GUIDE", "ROLE_TOURIST", "ROLE_ADMIN"]
 
 
 def _get_signing_key() -> bytes:
@@ -34,7 +34,7 @@ async def get_current_user(
         "sub": "username",
         "userId": "neo4j-id",
         "email": "user@example.com",
-        "roles": ["ROLE_AUTHOR", "ROLE_TOURIST"],
+        "roles": ["ROLE_GUIDE", "ROLE_TOURIST"],
         "iat": ...,
         "exp": ...
     }
@@ -44,7 +44,7 @@ async def get_current_user(
         payload = jwt.decode(
             token,
             _get_signing_key(),
-            algorithms=[settings.JWT_ALGORITHM],
+            algorithms=["HS256", "HS384", "HS512"],
         )
 
         user_id: str = payload.get("userId")
@@ -65,19 +65,20 @@ async def get_current_user(
             roles=roles,
         )
 
-    except JWTError:
+    except JWTError as e:
+        print(f"JWT decode error: {e}")
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid or expired token",
+            detail=f"Invalid or expired token: {str(e)}",
         )
 
 
 def require_role(required_role: str):
     """
     Proverava da li korisnik ima odredjenu ulogu.
-    Spring Security koristi ROLE_ prefiks, pa se prosledjuje npr. "ROLE_AUTHOR".
+    Spring Security koristi ROLE_ prefiks, pa se prosledjuje npr. "ROLE_GUIDE".
 
-    Koristi se: Depends(require_role("ROLE_AUTHOR"))
+    Koristi se: Depends(require_role("ROLE_GUIDE"))
     """
     async def role_checker(
         current_user: TokenData = Depends(get_current_user),
