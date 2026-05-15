@@ -8,6 +8,7 @@ type Config struct {
 	BlogServiceURL         string
 	StakeholdersServiceURL string
 	FollowersServiceURL    string
+	TourServiceURL         string
 	JWTSecret              string
 }
 
@@ -18,6 +19,7 @@ func LoadConfig() *Config {
 		AuthServiceURL:         getEnv("AUTH_SERVICE_URL", "http://localhost:8081"),
 		BlogServiceURL:         getEnv("BLOG_SERVICE_URL", "http://localhost:8082"),
 		FollowersServiceURL:    getEnv("FOLLOWERS_SERVICE_URL", "http://localhost:8083"),
+		TourServiceURL:         getEnv("TOUR_SERVICE_URL", "http://localhost:8084"),
 		JWTSecret:              getEnv("JWT_SECRET", ""),
 	}
 }
