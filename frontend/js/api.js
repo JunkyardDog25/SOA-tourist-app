@@ -58,7 +58,12 @@ async function request(path, options = {}) {
       typeof data?.detail === "string"
         ? data.detail
         : Array.isArray(data?.detail)
-          ? data.detail.map((d) => d.msg || JSON.stringify(d)).join(", ")
+          ? data.detail
+              .map((d) => {
+                const loc = Array.isArray(d.loc) ? d.loc.join(".") : "";
+                return d.msg ? `${loc}: ${d.msg}`.trim() : JSON.stringify(d);
+              })
+              .join("; ")
           : `HTTP ${response.status}`;
     throw new Error(message);
   }
@@ -86,4 +91,11 @@ export const api = {
     }),
   deleteKeypoint: (tourId, keypointId) =>
     request(`/tours/${tourId}/keypoints/${keypointId}`, { method: "DELETE" }),
+
+  getTouristLocation: () => request("/simulator/location"),
+  setTouristLocation: (body) =>
+    request("/simulator/location", {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
 };
