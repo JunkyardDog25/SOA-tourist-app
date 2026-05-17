@@ -23,7 +23,7 @@ class KeypointCreate(BaseModel):
     description: str = Field(min_length=1, max_length=2000, description="Detaljni opis ključne tačke")
     latitude: float = Field(ge=-90, le=90, description="Geografska širina (-90 do 90)")
     longitude: float = Field(ge=-180, le=180, description="Geografska dužina (-180 do 180)")
-    image_url: str = Field(min_length=1, max_length=1000, description="URL slike ključne tačke")
+    image_url: str = Field(default="", max_length=1000, description="URL slike ključne tačke (opciono)")
 
 
 class KeypointResponse(BaseModel):
@@ -40,7 +40,7 @@ class KeypointUpdate(BaseModel):
     description: Optional[str] = Field(default=None, min_length=1, max_length=2000)
     latitude: Optional[float] = Field(default=None, ge=-90, le=90)
     longitude: Optional[float] = Field(default=None, ge=-180, le=180)
-    image_url: Optional[str] = Field(default=None, min_length=1, max_length=1000)
+    image_url: Optional[str] = Field(default=None, max_length=1000)
 
 
 # ─── Tour ────────────────────────────────────────────────────────

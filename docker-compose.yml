@@ -213,6 +213,8 @@ services:
   tour-service:
     build: ./tour_service
     container_name: tour-service
+    ports:
+      - "8084:8084"
     environment:
       MONGO_URI: ${MONGO_URI}
       MONGO_DB: ${MONGO_DB}
@@ -222,6 +224,20 @@ services:
         condition: service_healthy
     networks:
       - tour-net
+      - shared-net
+
+  # ── Frontend (mapa tura) ──────────────────────────────────────────────────────
+  tour-frontend:
+    image: nginx:alpine
+    container_name: tour-frontend
+    ports:
+      - "3000:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html:ro
+      - ./frontend/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - api-gateway
+    networks:
       - shared-net
 
 volumes:

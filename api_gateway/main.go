@@ -21,6 +21,7 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(middleware.CORS)
 	r.Use(middleware.Logger)
 	r.Use(middleware.JWTAuth(cfg.JWTSecret))
 
