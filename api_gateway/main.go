@@ -21,6 +21,7 @@ func main() {
 
 	r := chi.NewRouter()
 
+	r.Use(middleware.CORS)
 	r.Use(middleware.Logger)
 	r.Use(middleware.JWTAuth(cfg.JWTSecret))
 
@@ -30,6 +31,7 @@ func main() {
 	proxy.MountProxy(r, "/api/followers", followersProxy)
 	proxy.MountProxy(r, "/api/tours", tourProxy)
 	proxy.MountProxy(r, "/api/reviews", tourProxy)
+	proxy.MountProxy(r, "/api/simulator", tourProxy)
 
 	log.Printf("API Gateway running on :%s", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))

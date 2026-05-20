@@ -86,14 +86,14 @@ async def add_keypoint(
     return await tour_service.add_keypoint(tour_id, data, current_user.user_id)
 
 
-@router.put("/{tour_id}/keypoints/{keypoint_id}", response_model=TourResponse)
+@router.put("/{tour_id}/keypoints/{keypoint_id}", response_model=KeypointResponse)
 async def update_keypoint(
     tour_id: str,
     keypoint_id: str,
     data: KeypointUpdate,
     current_user: TokenData = Depends(require_role("ROLE_GUIDE")),
 ):
-    """Autor azurira kljucnu tacku."""
+    """Autor azurira kljucnu tacku (ukljucujuci novu poziciju sa mape)."""
     return await tour_service.update_keypoint(
         tour_id, keypoint_id, data, current_user.user_id
     )

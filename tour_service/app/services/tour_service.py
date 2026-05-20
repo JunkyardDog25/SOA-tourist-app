@@ -11,7 +11,8 @@ def _tour_to_response(tour: dict) -> dict:
     """Konvertuje MongoDB dokument u response format."""
     tour["id"] = str(tour.pop("_id"))
     for kp in tour.get("keypoints", []):
-        kp.setdefault("id", str(uuid4()))
+        if not kp.get("id"):
+            kp["id"] = str(uuid4())
     return tour
 
 
@@ -159,17 +160,25 @@ async def update_keypoint(
     update_fields = {}
     for field, value in data.model_dump(exclude_none=True).items():
         update_fields[f"keypoints.$.{field}"] = value
-    update_fields["updated_at"] = datetime.now(timezone.utc)
 
     result = await db.tours.update_one(
         {"_id": tour_obj_id, "keypoints.id": keypoint_id},
-        {"$set": update_fields},
+        {
+            "$set": {
+                **update_fields,
+                "updated_at": datetime.now(timezone.utc),
+            }
+        },
     )
 
     if result.matched_count == 0:
         raise HTTPException(status_code=404, detail="Keypoint not found")
 
-    return await get_tour_by_id(tour_id)
+    tour = await get_tour_by_id(tour_id)
+    for kp in tour.get("keypoints", []):
+        if kp["id"] == keypoint_id:
+            return kp
+    raise HTTPException(status_code=404, detail="Keypoint not found")
 
 
 async def delete_keypoint(tour_id: str, keypoint_id: str, author_id: str):

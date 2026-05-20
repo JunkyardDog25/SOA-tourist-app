@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="sr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulator – lokacija turiste</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="./css/app.css" />
+    <style>
+      #simulator-map {
+        min-height: 520px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        cursor: crosshair;
+      }
+      .tourist-marker {
+        background: #16a34a;
+        color: #fff;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.75rem;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      .simulator-info {
+        margin-bottom: 1rem;
+        padding: 0.75rem 1rem;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+        border-radius: 8px;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Simulator pozicije</h1>
+      <p class="subtitle">
+        Turista postavlja trenutnu lokaciju (za kasniju izvedbu ture)
+      </p>
+    </header>
+
+    <main class="app-main">
+      <section id="view-auth" class="panel">
+        <h2>Prijava</h2>
+        <p>Unesi JWT token sa auth servisa (nalog <strong>TOURIST</strong>).</p>
+        <label class="field">
+          <span>Bearer token</span>
+          <textarea id="token-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIs..."></textarea>
+        </label>
+        <p id="auth-error" class="error"></p>
+        <button type="button" id="btn-save-token" class="btn primary">Otvori simulator</button>
+        <p class="meta" style="margin-top: 1rem">
+          <a href="index.html">← Editor tura (vodič)</a>
+        </p>
+      </section>
+
+      <section id="view-simulator" class="panel hidden">
+        <div class="panel-head">
+          <h2>Mapa simulatora</h2>
+          <button type="button" id="btn-logout" class="btn ghost">Odjava</button>
+        </div>
+        <div class="simulator-info">
+          <p id="status-text">Klikni na mapu da postaviš svoju trenutnu lokaciju.</p>
+          <p><strong>Koordinate:</strong> <span id="coords-text">—</span></p>
+        </div>
+        <p id="map-error" class="error"></p>
+        <div id="simulator-map"></div>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script type="module" src="./js/simulator-app.js"></script>
+  </body>
+</html>
