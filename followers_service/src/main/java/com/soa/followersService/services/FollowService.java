@@ -1,5 +1,6 @@
 package com.soa.followersService.services;
 
+import com.soa.followersService.dtos.UserDto;
 import com.soa.followersService.models.Follows;
 import com.soa.followersService.models.User;
 import com.soa.followersService.repositories.UserRepository;
@@ -51,6 +52,9 @@ public class FollowService {
                 .orElseGet(() -> {
                     User u = new User();
                     u.setUserId(followerId);
+                    u.setUsername(followerResponse.getUsername());
+                    u.setEmail(followerResponse.getEmail());
+                    u.setRole(followerResponse.getRole());
                     return userRepository.save(u);
                 });
 
@@ -58,6 +62,9 @@ public class FollowService {
                 .orElseGet(() -> {
                     User u = new User();
                     u.setUserId(followeeId);
+                    u.setUsername(followeeResponse.getUsername());
+                    u.setEmail(followeeResponse.getEmail());
+                    u.setRole(followeeResponse.getRole());
                     return userRepository.save(u);
                 });
 
@@ -85,7 +92,16 @@ public class FollowService {
         return userRepository.findFollowingIds(userId);
     }
 
-    public List<String> getRecommendations(String userId) {
-        return userRepository.findRecommendations(userId);
+    public List<UserDto> getRecommendations(String userId) {
+        return userRepository.findRecommendations(userId).stream()
+                .map(user -> {
+                    UserDto dto = new UserDto();
+                    dto.setUserId(user.getUserId());
+                    dto.setUsername(user.getUsername());
+                    dto.setEmail(user.getEmail());
+                    dto.setRole(user.getRole());
+                    return dto;
+                })
+                .toList();
     }
 }

@@ -20,6 +20,12 @@ public class User {
     @Id
     private String userId;
 
+    private String username;
+
+    private String email;
+
+    private String role;
+
     @Relationship(type = "FOLLOWS", direction = Relationship.Direction.OUTGOING)
     private List<Follows> following = new ArrayList<>();
 }
