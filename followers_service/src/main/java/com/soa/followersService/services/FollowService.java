@@ -84,4 +84,8 @@ public class FollowService {
     public List<String> getFollowers(String userId) {
         return userRepository.findFollowingIds(userId);
     }
+
+    public List<String> getRecommendations(String userId) {
+        return userRepository.findRecommendations(userId);
+    }
 }

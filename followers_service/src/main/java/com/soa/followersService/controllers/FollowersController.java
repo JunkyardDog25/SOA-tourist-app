@@ -48,4 +48,9 @@ public class FollowersController {
     public ResponseEntity<List<String>> getFollowers(@PathVariable String userId) {
         return ResponseEntity.ok(followService.getFollowers(userId));
     }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<String>> getRecommendations(@AuthenticationPrincipal String userId) {
+        return ResponseEntity.ok(followService.getRecommendations(userId));
+    }
 }
