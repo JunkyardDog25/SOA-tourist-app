@@ -11,6 +11,8 @@ services:
       BLOG_SERVICE_URL: http://blog-service:8080
       STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080
       FOLLOWERS_SERVICE_URL: http://followers-service:8080
+      FOLLOWERS_SERVICE_GRPC_HOST: followers-service
+      FOLLOWERS_SERVICE_GRPC_PORT: 9091
       TOUR_SERVICE_URL: http://tour-service:8084
     depends_on:
       - auth-service
@@ -168,6 +170,9 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       AUTH_SERVICE_GRPC_HOST: auth-service
       AUTH_SERVICE_GRPC_PORT: 9090
+      GRPC_SERVER_PORT: 9091
+    expose:
+      - "9091"
     depends_on:
       followers-neo4j:
         condition: service_healthy

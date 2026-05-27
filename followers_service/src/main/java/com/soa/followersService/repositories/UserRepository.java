@@ -23,4 +23,10 @@ public interface UserRepository extends Neo4jRepository<User, String> {
 
     @Query("MATCH (:User {userId: $followerId})-[f:FOLLOWS]->(:User {userId: $followeeId}) DELETE f")
     void deleteFollows(String followerId, String followeeId);
+
+    @Query("MATCH (:User {userId: $userId})-[:FOLLOWS]->(friend:User)-[:FOLLOWS]->(recommended:User) " +
+           "WHERE NOT (:User {userId: $userId})-[:FOLLOWS]->(recommended) " +
+           "AND recommended.userId <> $userId " +
+           "RETURN DISTINCT recommended")
+    List<User> findRecommendations(String userId);
 }

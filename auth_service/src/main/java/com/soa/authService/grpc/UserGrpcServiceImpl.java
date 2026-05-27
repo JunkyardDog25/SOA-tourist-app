@@ -29,6 +29,7 @@ public class UserGrpcServiceImpl extends UserServiceGrpc.UserServiceImplBase {
                     .setUserId(user.getId())
                     .setUsername(user.getUsername())
                     .setEmail(user.getEmail())
+                    .setRole(user.getRole() != null ? user.getRole().name() : "")
                     .setFound(true)
                     .build();
         } else {

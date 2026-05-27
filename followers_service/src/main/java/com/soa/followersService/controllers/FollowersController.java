@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.soa.followersService.dtos.FollowRequest;
+import com.soa.followersService.dtos.UserDto;
+import com.soa.followersService.models.User;
 import com.soa.followersService.services.FollowService;
 
 import jakarta.validation.Valid;
@@ -47,5 +49,10 @@ public class FollowersController {
     @GetMapping("/followers/{userId}")
     public ResponseEntity<List<String>> getFollowers(@PathVariable String userId) {
         return ResponseEntity.ok(followService.getFollowers(userId));
+    }
+
+    @GetMapping("/recommendations")
+    public ResponseEntity<List<UserDto>> getRecommendations(@AuthenticationPrincipal String userId) {
+        return ResponseEntity.ok(followService.getRecommendations(userId));
     }
 }

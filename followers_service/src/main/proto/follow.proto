@@ -1,0 +1,22 @@
+syntax = "proto3";
+
+package follow;
+
+option java_package = "com.soa.grpc.follow";
+option java_outer_classname = "FollowProto";
+option java_multiple_files = true;
+option go_package = "api-gateway/grpc/follow";
+
+service FollowService {
+  rpc Follow (FollowRequest) returns (FollowResponse);
+}
+
+message FollowRequest {
+  string follower_id = 1;
+  string followee_id = 2;
+}
+
+message FollowResponse {
+  bool success = 1;
+  string message  = 2;
+}
