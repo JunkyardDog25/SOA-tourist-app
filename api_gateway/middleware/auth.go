@@ -1,12 +1,22 @@
 package middleware
 
 import (
+	"context"
 	"encoding/base64"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+type contextKey string
+
+const UserIDKey contextKey = "userId"
+
+func UserIDFromContext(ctx context.Context) (string, bool) {
+	id, ok := ctx.Value(UserIDKey).(string)
+	return id, ok
+}
 
 var publicRoutes = []string{
 	"/api/auth/register",
@@ -53,6 +63,12 @@ func JWTAuth(jwtSecret string) func(http.Handler) http.Handler {
 			if err != nil || !token.Valid {
 				http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
 				return
+			}
+
+			if claims, ok := token.Claims.(jwt.MapClaims); ok {
+				if userId, ok := claims["userId"].(string); ok {
+					r = r.WithContext(context.WithValue(r.Context(), UserIDKey, userId))
+				}
 			}
 
 			next.ServeHTTP(w, r)
