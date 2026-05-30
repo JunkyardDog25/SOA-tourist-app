@@ -14,7 +14,6 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.soa.followersService.dtos.FollowRequest;
 import com.soa.followersService.dtos.UserDto;
-import com.soa.followersService.models.User;
 import com.soa.followersService.services.FollowService;
 
 import jakarta.validation.Valid;
