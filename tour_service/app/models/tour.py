@@ -16,6 +16,12 @@ class TourStatus(str, Enum):
     ARCHIVED = "archived"
 
 
+class TransportType(str, Enum):
+    WALKING = "walking"
+    BICYCLE = "bicycle"
+    CAR = "car"
+
+
 # ─── Keypoint (ugnjezden u Tour dokument) ────────────────────────
 
 class KeypointCreate(BaseModel):
@@ -32,7 +38,7 @@ class KeypointResponse(BaseModel):
     description: str
     latitude: float
     longitude: float
-    image_url: str
+    image_url: str = ""
 
 
 class KeypointUpdate(BaseModel):
@@ -61,6 +67,15 @@ class TourUpdate(BaseModel):
     price: Optional[float] = None
 
 
+class TourDuration(BaseModel):
+    transport_type: TransportType
+    minutes: int = Field(gt=0, description="Vreme obilaska ture u minutima")
+
+
+class TourDurationsUpdate(BaseModel):
+    durations: list[TourDuration] = Field(default_factory=list)
+
+
 class TourResponse(BaseModel):
     id: str
     author_id: str
@@ -70,6 +85,25 @@ class TourResponse(BaseModel):
     tags: list[str] = Field(default_factory=list)
     status: TourStatus
     price: float
+    distance_km: float = 0.0
+    durations: list[TourDuration] = Field(default_factory=list)
     keypoints: list[KeypointResponse] = Field(default_factory=list)
+    published_at: Optional[datetime] = None
+    archived_at: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
+
+
+class TourPublicResponse(BaseModel):
+    id: str
+    author_id: str
+    title: str
+    description: str
+    difficulty: TourDifficulty
+    tags: list[str] = Field(default_factory=list)
+    status: TourStatus
+    price: float
+    distance_km: float = 0.0
+    durations: list[TourDuration] = Field(default_factory=list)
+    first_keypoint: Optional[KeypointResponse] = None
+    published_at: Optional[datetime] = None
