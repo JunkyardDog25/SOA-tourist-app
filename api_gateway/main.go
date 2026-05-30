@@ -2,7 +2,7 @@ package main
 
 import (
 	"api-gateway/config"
-	followgrpc "api-gateway/grpc"
+	servicegrpc "api-gateway/grpc"
 	"api-gateway/middleware"
 	"api-gateway/proxy"
 	"encoding/json"
@@ -21,8 +21,10 @@ func main() {
 	followersProxy := proxy.New(cfg.FollowersServiceURL)
 	tourProxy := proxy.New(cfg.TourServiceURL)
 
-	followersGRPC := followgrpc.NewFollowersClient(cfg.FollowersServiceGRPCHost, cfg.FollowersServiceGRPCPort)
+	followersGRPC := servicegrpc.NewFollowersClient(cfg.FollowersServiceGRPCHost, cfg.FollowersServiceGRPCPort)
 	defer followersGRPC.Close()
+	tourGRPC := servicegrpc.NewTourClient(cfg.TourServiceGRPCHost, cfg.TourServiceGRPCPort)
+	defer tourGRPC.Close()
 
 	r := chi.NewRouter()
 
@@ -47,7 +49,7 @@ func main() {
 		}
 
 		if err := followersGRPC.Follow(followerId, body.FolloweeId); err != nil {
-			if fe, ok := err.(*followgrpc.FollowError); ok {
+			if fe, ok := err.(*servicegrpc.FollowError); ok {
 				http.Error(w, fe.Message, fe.Code)
 			} else {
 				http.Error(w, "Internal server error", http.StatusInternalServerError)
@@ -56,6 +58,43 @@ func main() {
 		}
 
 		w.WriteHeader(http.StatusOK)
+	})
+
+	r.Get("/api/tours/published", func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := middleware.UserIDFromContext(r.Context())
+		if !ok || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		tours, err := tourGRPC.GetPublishedTours(userID, middleware.RolesFromContext(r.Context()))
+		if err != nil {
+			writeTourError(w, err)
+			return
+		}
+
+		writeJSON(w, tours)
+	})
+
+	r.Get("/api/tours/my", func(w http.ResponseWriter, r *http.Request) {
+		tourProxy.ServeHTTP(w, r)
+	})
+
+	r.Get("/api/tours/{tour_id}", func(w http.ResponseWriter, r *http.Request) {
+		tourID := chi.URLParam(r, "tour_id")
+		userID, ok := middleware.UserIDFromContext(r.Context())
+		if !ok || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		tour, err := tourGRPC.GetTourByID(tourID, userID, middleware.RolesFromContext(r.Context()))
+		if err != nil {
+			writeTourError(w, err)
+			return
+		}
+
+		writeJSON(w, tour)
 	})
 
 	proxy.MountProxy(r, "/api/auth", authProxy)
@@ -68,4 +107,19 @@ func main() {
 
 	log.Printf("API Gateway running on :%s", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))
+}
+
+func writeJSON(w http.ResponseWriter, payload interface{}) {
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		http.Error(w, "Internal server error", http.StatusInternalServerError)
+	}
+}
+
+func writeTourError(w http.ResponseWriter, err error) {
+	if tourErr, ok := err.(*servicegrpc.TourError); ok {
+		http.Error(w, tourErr.Message, tourErr.Code)
+		return
+	}
+	http.Error(w, "Internal server error", http.StatusInternalServerError)
 }

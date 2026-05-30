@@ -14,6 +14,8 @@ type Config struct {
 	FollowersServiceGRPCHost string
 	FollowersServiceGRPCPort int
 	TourServiceURL           string
+	TourServiceGRPCHost      string
+	TourServiceGRPCPort      int
 	JWTSecret                string
 }
 
@@ -27,6 +29,8 @@ func LoadConfig() *Config {
 		FollowersServiceGRPCHost: getEnv("FOLLOWERS_SERVICE_GRPC_HOST", "localhost"),
 		FollowersServiceGRPCPort: getEnvInt("FOLLOWERS_SERVICE_GRPC_PORT", 9091),
 		TourServiceURL:           getEnv("TOUR_SERVICE_URL", "http://localhost:8084"),
+		TourServiceGRPCHost:      getEnv("TOUR_SERVICE_GRPC_HOST", "localhost"),
+		TourServiceGRPCPort:      getEnvInt("TOUR_SERVICE_GRPC_PORT", 9092),
 		JWTSecret:                getEnv("JWT_SECRET", ""),
 	}
 }

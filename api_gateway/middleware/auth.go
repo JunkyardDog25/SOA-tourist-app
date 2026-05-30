@@ -12,10 +12,19 @@ import (
 type contextKey string
 
 const UserIDKey contextKey = "userId"
+const RolesKey contextKey = "roles"
 
 func UserIDFromContext(ctx context.Context) (string, bool) {
 	id, ok := ctx.Value(UserIDKey).(string)
 	return id, ok
+}
+
+func RolesFromContext(ctx context.Context) []string {
+	roles, ok := ctx.Value(RolesKey).([]string)
+	if !ok {
+		return []string{}
+	}
+	return roles
 }
 
 var publicRoutes = []string{
@@ -69,9 +78,25 @@ func JWTAuth(jwtSecret string) func(http.Handler) http.Handler {
 				if userId, ok := claims["userId"].(string); ok {
 					r = r.WithContext(context.WithValue(r.Context(), UserIDKey, userId))
 				}
+				r = r.WithContext(context.WithValue(r.Context(), RolesKey, rolesFromClaims(claims["roles"])))
 			}
 
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+func rolesFromClaims(value interface{}) []string {
+	roles, ok := value.([]interface{})
+	if !ok {
+		return []string{}
+	}
+
+	result := make([]string, 0, len(roles))
+	for _, role := range roles {
+		if roleText, ok := role.(string); ok {
+			result = append(result, roleText)
+		}
+	}
+	return result
 }
