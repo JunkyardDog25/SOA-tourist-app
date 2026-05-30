@@ -73,12 +73,22 @@ async function request(path, options = {}) {
 
 export const api = {
   getMyTours: () => request("/tours/my"),
+  getPublishedTours: () => request("/tours/published"),
   getTour: (tourId) => request(`/tours/${tourId}`),
   createTour: (body) =>
     request("/tours", { method: "POST", body: JSON.stringify(body) }),
   updateTour: (tourId, body) =>
     request(`/tours/${tourId}`, { method: "PUT", body: JSON.stringify(body) }),
   deleteTour: (tourId) => request(`/tours/${tourId}`, { method: "DELETE" }),
+  updateTourDurations: (tourId, body) =>
+    request(`/tours/${tourId}/durations`, {
+      method: "PUT",
+      body: JSON.stringify(body),
+    }),
+  publishTour: (tourId) => request(`/tours/${tourId}/publish`, { method: "POST" }),
+  archiveTour: (tourId) => request(`/tours/${tourId}/archive`, { method: "POST" }),
+  reactivateTour: (tourId) =>
+    request(`/tours/${tourId}/reactivate`, { method: "POST" }),
   addKeypoint: (tourId, body) =>
     request(`/tours/${tourId}/keypoints`, {
       method: "POST",

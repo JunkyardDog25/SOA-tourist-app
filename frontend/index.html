@@ -28,6 +28,9 @@
         </label>
         <p id="auth-error" class="error"></p>
         <button type="button" id="btn-save-token" class="btn primary">Nastavi</button>
+        <button type="button" id="btn-public-tours-auth" class="btn ghost">
+          Pregled objavljenih tura
+        </button>
         <p class="meta" style="margin-top: 1rem">
           <a href="simulator.html">Simulator lokacije (turista) →</a>
         </p>
@@ -38,11 +41,28 @@
           <h2>Moje ture</h2>
           <div class="actions">
             <button type="button" id="btn-new-tour" class="btn primary">Nova tura</button>
+            <button type="button" id="btn-public-tours-list" class="btn ghost">
+              Objavljene ture
+            </button>
             <button type="button" id="btn-logout" class="btn ghost">Odjava</button>
           </div>
         </div>
         <p id="list-error" class="error"></p>
         <ul id="tours-list" class="tours-list"></ul>
+      </section>
+
+      <section id="view-public" class="panel hidden">
+        <div class="panel-head">
+          <div>
+            <h2>Objavljene ture</h2>
+            <p class="meta">Turistički prikaz sadrži samo osnovne podatke i prvu ključnu tačku.</p>
+          </div>
+          <div class="actions">
+            <button type="button" id="btn-back-auth" class="btn ghost">Nazad</button>
+          </div>
+        </div>
+        <p id="public-error" class="error"></p>
+        <ul id="public-tours-list" class="tours-list"></ul>
       </section>
 
       <section id="view-editor" class="panel hidden editor-layout">
@@ -52,10 +72,39 @@
             <h2 id="editor-title">Tura</h2>
             <p id="editor-status" class="meta"></p>
           </div>
+          <div class="actions lifecycle-actions">
+            <button type="button" id="btn-publish-tour" class="btn primary">Objavi</button>
+            <button type="button" id="btn-archive-tour" class="btn danger">Arhiviraj</button>
+            <button type="button" id="btn-reactivate-tour" class="btn primary">Reaktiviraj</button>
+          </div>
         </div>
 
         <div class="editor-grid">
           <aside class="sidebar">
+            <section class="tour-details">
+              <h3>Podaci ture</h3>
+              <p id="tour-distance" class="meta"></p>
+              <p id="tour-timestamps" class="meta"></p>
+              <form id="duration-form" class="duration-form">
+                <h4>Vreme obilaska</h4>
+                <label class="field">
+                  <span>Peške (min)</span>
+                  <input id="duration-walking" type="number" min="1" step="1" />
+                </label>
+                <label class="field">
+                  <span>Biciklom (min)</span>
+                  <input id="duration-bicycle" type="number" min="1" step="1" />
+                </label>
+                <label class="field">
+                  <span>Automobilom (min)</span>
+                  <input id="duration-car" type="number" min="1" step="1" />
+                </label>
+                <p id="duration-error" class="error"></p>
+                <button type="submit" class="btn primary">Sačuvaj vremena</button>
+              </form>
+              <p id="lifecycle-error" class="error"></p>
+            </section>
+
             <h3>Ključne tačke</h3>
             <div class="sidebar-actions">
               <button type="button" id="btn-add-keypoint" class="btn primary">

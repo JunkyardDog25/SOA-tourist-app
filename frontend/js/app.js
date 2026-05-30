@@ -4,6 +4,7 @@ import { TourMap } from "./tour-map.js";
 const views = {
   auth: document.getElementById("view-auth"),
   list: document.getElementById("view-list"),
+  public: document.getElementById("view-public"),
   editor: document.getElementById("view-editor"),
 };
 
@@ -11,8 +12,12 @@ const tokenInput = document.getElementById("token-input");
 const authError = document.getElementById("auth-error");
 const toursListEl = document.getElementById("tours-list");
 const listError = document.getElementById("list-error");
+const publicError = document.getElementById("public-error");
+const publicToursListEl = document.getElementById("public-tours-list");
 const editorTitle = document.getElementById("editor-title");
 const editorStatus = document.getElementById("editor-status");
+const tourDistance = document.getElementById("tour-distance");
+const tourTimestamps = document.getElementById("tour-timestamps");
 const keypointsListEl = document.getElementById("keypoints-list");
 const mapHint = document.getElementById("map-hint");
 const keypointForm = document.getElementById("keypoint-form");
@@ -23,12 +28,25 @@ const kpImageUrl = document.getElementById("kp-image-url");
 const kpLatitude = document.getElementById("kp-latitude");
 const kpLongitude = document.getElementById("kp-longitude");
 const formError = document.getElementById("form-error");
+const durationError = document.getElementById("duration-error");
+const lifecycleError = document.getElementById("lifecycle-error");
+const durationInputs = {
+  walking: document.getElementById("duration-walking"),
+  bicycle: document.getElementById("duration-bicycle"),
+  car: document.getElementById("duration-car"),
+};
+const lifecycleButtons = {
+  publish: document.getElementById("btn-publish-tour"),
+  archive: document.getElementById("btn-archive-tour"),
+  reactivate: document.getElementById("btn-reactivate-tour"),
+};
 
 let tourMap = null;
 let currentTour = null;
 let selectedKeypointId = null;
 let mapInteraction = null;
 let savingKeypoint = false;
+let previousPublicView = "auth";
 
 function showView(name) {
   Object.values(views).forEach((el) => el.classList.add("hidden"));
@@ -45,6 +63,15 @@ function setMapHint(text, type = "info") {
 
 async function init() {
   document.getElementById("btn-save-token").addEventListener("click", onSaveToken);
+  document
+    .getElementById("btn-public-tours-auth")
+    .addEventListener("click", () => showPublishedTours("auth"));
+  document
+    .getElementById("btn-public-tours-list")
+    .addEventListener("click", () => showPublishedTours("list"));
+  document.getElementById("btn-back-auth").addEventListener("click", () => {
+    showView(previousPublicView === "list" ? "list" : "auth");
+  });
   document.getElementById("btn-logout").addEventListener("click", onLogout);
   document.getElementById("btn-new-tour").addEventListener("click", onNewTour);
   document.getElementById("btn-back-list").addEventListener("click", () => {
@@ -60,6 +87,15 @@ async function init() {
     e.preventDefault();
     saveKeypointForm();
   });
+  document.getElementById("duration-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    saveDurationForm();
+  });
+  lifecycleButtons.publish.addEventListener("click", () => runLifecycleAction("publish"));
+  lifecycleButtons.archive.addEventListener("click", () => runLifecycleAction("archive"));
+  lifecycleButtons.reactivate.addEventListener("click", () =>
+    runLifecycleAction("reactivate"),
+  );
 
   if (hasToken()) {
     showView("list");
@@ -110,6 +146,7 @@ async function loadTours() {
           <p>${escapeHtml(t.description)}</p>
           <span class="badge">${t.status}</span>
           <span class="meta">${t.keypoints?.length || 0} ključnih tačaka</span>
+          <span class="meta">${formatDistance(t.distance_km)}</span>
         </div>
         <button type="button" data-tour-id="${t.id}">Uredi na mapi</button>
       </li>`,
@@ -130,13 +167,18 @@ async function onNewTour() {
   if (!title?.trim()) return;
   const description = prompt("Opis ture:") || "";
   const difficulty = prompt("Težina (easy / medium / hard):", "easy") || "easy";
+  const tagsInput = prompt("Tagovi odvojeni zarezom:", "") || "";
+  const tags = tagsInput
+    .split(",")
+    .map((tag) => tag.trim())
+    .filter(Boolean);
 
   try {
     const tour = await api.createTour({
       title: title.trim(),
       description: description.trim() || title.trim(),
       difficulty,
-      tags: [],
+      tags,
     });
     await openEditor(tour.id);
   } catch (err) {
@@ -154,15 +196,98 @@ async function openEditor(tourId) {
 
   try {
     currentTour = await api.getTour(tourId);
-    editorTitle.textContent = currentTour.title;
-    editorStatus.textContent = `Status: ${currentTour.status} · ${currentTour.keypoints.length} tačaka`;
-    renderKeypointsSidebar();
-    tourMap.renderKeypoints(currentTour.keypoints, selectedKeypointId);
+    renderEditor();
     setMapHint("Izaberi tačku sa liste ili dodaj novu klikom na mapu.", "info");
   } catch (err) {
     alert(err.message);
     showView("list");
   }
+}
+
+async function showPublishedTours(previousView) {
+  previousPublicView = previousView;
+  authError.textContent = "";
+  listError.textContent = "";
+
+  if (tokenInput.value.trim()) {
+    setToken(tokenInput.value);
+  }
+  if (!hasToken()) {
+    authError.textContent = "Unesi JWT token pre pregleda objavljenih tura.";
+    showView("auth");
+    return;
+  }
+
+  showView("public");
+  publicError.textContent = "";
+  publicToursListEl.innerHTML = "<li class='loading'>Učitavanje...</li>";
+
+  try {
+    const tours = await api.getPublishedTours();
+    if (!tours.length) {
+      publicToursListEl.innerHTML = "<li class='empty'>Nema objavljenih tura.</li>";
+      return;
+    }
+
+    publicToursListEl.innerHTML = tours
+      .map((tour) => {
+        const firstKeypoint = tour.first_keypoint
+          ? `${escapeHtml(tour.first_keypoint.name)} (${tour.first_keypoint.latitude.toFixed(5)}, ${tour.first_keypoint.longitude.toFixed(5)})`
+          : "Nema prve ključne tačke";
+        return `
+      <li class="tour-card">
+        <div>
+          <h3>${escapeHtml(tour.title)}</h3>
+          <p>${escapeHtml(tour.description)}</p>
+          <span class="badge">${tour.status}</span>
+          <span class="meta">${formatDistance(tour.distance_km)}</span>
+          <span class="meta">${formatDurations(tour.durations)}</span>
+          <p class="meta">Prva tačka: ${firstKeypoint}</p>
+        </div>
+      </li>`;
+      })
+      .join("");
+  } catch (err) {
+    publicError.textContent = err.message;
+    publicToursListEl.innerHTML = "";
+  }
+}
+
+function renderEditor() {
+  if (!currentTour) return;
+
+  const keypoints = currentTour.keypoints || [];
+  editorTitle.textContent = currentTour.title;
+  editorStatus.textContent = `Status: ${currentTour.status} · ${keypoints.length} tačaka`;
+  tourDistance.textContent = `Dužina ture: ${formatDistance(currentTour.distance_km)}`;
+  tourTimestamps.textContent = formatTourTimestamps(currentTour);
+
+  populateDurationForm();
+  updateLifecycleButtons();
+  renderKeypointsSidebar();
+  tourMap.renderKeypoints(keypoints, selectedKeypointId);
+}
+
+async function refreshCurrentTour() {
+  currentTour = await api.getTour(currentTour.id);
+  renderEditor();
+}
+
+function populateDurationForm() {
+  const durations = currentTour?.durations || [];
+  Object.entries(durationInputs).forEach(([transportType, input]) => {
+    const duration = durations.find((item) => item.transport_type === transportType);
+    input.value = duration?.minutes || "";
+  });
+  durationError.textContent = "";
+}
+
+function updateLifecycleButtons() {
+  const status = currentTour?.status;
+  lifecycleError.textContent = "";
+  lifecycleButtons.publish.classList.toggle("hidden", status !== "draft");
+  lifecycleButtons.archive.classList.toggle("hidden", status !== "published");
+  lifecycleButtons.reactivate.classList.toggle("hidden", status !== "archived");
 }
 
 function renderKeypointsSidebar() {
@@ -288,10 +413,7 @@ async function saveKeypointForm() {
       return;
     }
 
-    currentTour = await api.getTour(currentTour.id);
-    editorStatus.textContent = `Status: ${currentTour.status} · ${currentTour.keypoints.length} tačaka`;
-    renderKeypointsSidebar();
-    tourMap.renderKeypoints(currentTour.keypoints, selectedKeypointId);
+    await refreshCurrentTour();
     keypointForm.classList.add("hidden");
     mapInteraction = null;
     setMapHint("Sačuvano.", "success");
@@ -309,14 +431,65 @@ async function deleteSelectedKeypoint() {
   try {
     await api.deleteKeypoint(currentTour.id, selectedKeypointId);
     selectedKeypointId = null;
-    currentTour = await api.getTour(currentTour.id);
-    editorStatus.textContent = `Status: ${currentTour.status} · ${currentTour.keypoints.length} tačaka`;
-    renderKeypointsSidebar();
-    tourMap.renderKeypoints(currentTour.keypoints, null);
+    await refreshCurrentTour();
     keypointForm.classList.add("hidden");
     setMapHint("Tačka obrisana.", "success");
   } catch (err) {
     formError.textContent = err.message;
+  }
+}
+
+async function saveDurationForm() {
+  if (!currentTour) return;
+
+  durationError.textContent = "";
+  const durations = [];
+  for (const [transportType, input] of Object.entries(durationInputs)) {
+    const rawValue = input.value.trim();
+    if (!rawValue) continue;
+
+    const minutes = Number(rawValue);
+    if (!Number.isInteger(minutes) || minutes <= 0) {
+      durationError.textContent = "Vreme obilaska mora biti pozitivan broj minuta.";
+      return;
+    }
+
+    durations.push({
+      transport_type: transportType,
+      minutes,
+    });
+  }
+
+  try {
+    currentTour = await api.updateTourDurations(currentTour.id, { durations });
+    renderEditor();
+    setMapHint("Vremena obilaska su sačuvana.", "success");
+  } catch (err) {
+    durationError.textContent = err.message;
+  }
+}
+
+async function runLifecycleAction(action) {
+  if (!currentTour) return;
+
+  const actions = {
+    publish: api.publishTour,
+    archive: api.archiveTour,
+    reactivate: api.reactivateTour,
+  };
+  const messages = {
+    publish: "Tura je objavljena.",
+    archive: "Tura je arhivirana.",
+    reactivate: "Tura je ponovo aktivirana.",
+  };
+
+  lifecycleError.textContent = "";
+  try {
+    currentTour = await actions[action](currentTour.id);
+    renderEditor();
+    setMapHint(messages[action], "success");
+  } catch (err) {
+    lifecycleError.textContent = err.message;
   }
 }
 
@@ -325,9 +498,47 @@ function resetEditor() {
   selectedKeypointId = null;
   mapInteraction = null;
   keypointForm.classList.add("hidden");
+  durationError.textContent = "";
+  lifecycleError.textContent = "";
   if (tourMap) {
     tourMap.setMode("view");
   }
+}
+
+function formatDistance(distanceKm) {
+  const distance = Number(distanceKm || 0);
+  return `${distance.toFixed(2)} km`;
+}
+
+function formatDurations(durations = []) {
+  if (!durations.length) {
+    return "Nema definisanih vremena";
+  }
+
+  const labels = {
+    walking: "peške",
+    bicycle: "biciklom",
+    car: "automobilom",
+  };
+  return durations
+    .map((duration) => `${duration.minutes} min ${labels[duration.transport_type]}`)
+    .join(", ");
+}
+
+function formatTourTimestamps(tour) {
+  const parts = [];
+  if (tour.published_at) {
+    parts.push(`Objavljeno: ${formatDateTime(tour.published_at)}`);
+  }
+  if (tour.archived_at) {
+    const label = tour.status === "archived" ? "Arhivirano" : "Poslednje arhiviranje";
+    parts.push(`${label}: ${formatDateTime(tour.archived_at)}`);
+  }
+  return parts.join(" · ");
+}
+
+function formatDateTime(value) {
+  return new Date(value).toLocaleString("sr-RS");
 }
 
 function escapeHtml(value) {

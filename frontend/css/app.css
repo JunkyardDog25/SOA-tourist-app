@@ -66,6 +66,7 @@ body {
 .actions {
   display: flex;
   gap: 0.5rem;
+  flex-wrap: wrap;
 }
 
 .field {
@@ -186,6 +187,33 @@ body {
   flex-direction: column;
   gap: 0.5rem;
   margin-bottom: 1rem;
+}
+
+.lifecycle-actions {
+  align-self: flex-start;
+}
+
+.tour-details {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 0.85rem;
+  margin-bottom: 1rem;
+  background: #f8fafc;
+}
+
+.tour-details h3,
+.tour-details h4 {
+  margin: 0 0 0.75rem;
+}
+
+.tour-details .meta {
+  margin: 0 0 0.5rem;
+}
+
+.duration-form {
+  border-top: 1px solid var(--border);
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
 }
 
 .keypoints-list {

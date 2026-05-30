@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from app.auth import get_current_user, require_role, TokenData
 from app.models.tour import (
-    TourCreate, TourUpdate, TourResponse,
+    TourCreate, TourUpdate, TourResponse, TourPublicResponse, TourDurationsUpdate,
     KeypointCreate, KeypointUpdate, KeypointResponse,
 )
 from app.services import tour_service
@@ -28,30 +28,34 @@ async def get_my_tours(
     return await tour_service.get_tours_by_author(current_user.user_id)
 
 
-@router.get("/published", response_model=list[TourResponse])
+@router.get("/published", response_model=list[TourPublicResponse])
 async def get_published_tours(
     current_user: TokenData = Depends(get_current_user),
 ):
-    """Svi korisnici mogu videti objavljene ture."""
+    """Svi korisnici mogu videti osnovne informacije objavljenih tura."""
     return await tour_service.get_all_published_tours()
 
 
-@router.get("/{tour_id}", response_model=TourResponse)
+@router.get("/{tour_id}", response_model=TourResponse | TourPublicResponse)
 async def get_tour(
     tour_id: str,
     current_user: TokenData = Depends(get_current_user),
 ):
-    """Dohvati jednu turu po ID-u. Draft ture vidi samo autor ili admin."""
+    """Dohvati turu. Turisti za objavljenu turu vide samo prvu ključnu tačku."""
     tour = await tour_service.get_tour_by_id(tour_id)
+    is_owner_or_admin = (
+        tour["author_id"] == current_user.user_id or "ROLE_ADMIN" in current_user.roles
+    )
     if (
         tour["status"] != "published"
-        and tour["author_id"] != current_user.user_id
-        and "ROLE_ADMIN" not in current_user.roles
+        and not is_owner_or_admin
     ):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this tour",
         )
+    if not is_owner_or_admin:
+        return tour_service.get_public_tour_response(tour)
     return tour
 
 
@@ -63,6 +67,43 @@ async def update_tour(
 ):
     """Autor azurira svoju turu (naziv, opis, status, cenu...)."""
     return await tour_service.update_tour(tour_id, data, current_user.user_id)
+
+
+@router.put("/{tour_id}/durations", response_model=TourResponse)
+async def update_tour_durations(
+    tour_id: str,
+    data: TourDurationsUpdate,
+    current_user: TokenData = Depends(require_role("ROLE_GUIDE")),
+):
+    """Autor definiše vremena obilaska ture po tipu prevoza."""
+    return await tour_service.update_tour_durations(tour_id, data, current_user.user_id)
+
+
+@router.post("/{tour_id}/publish", response_model=TourResponse)
+async def publish_tour(
+    tour_id: str,
+    current_user: TokenData = Depends(require_role("ROLE_GUIDE")),
+):
+    """Autor objavljuje draft turu ako su ispunjeni uslovi objave."""
+    return await tour_service.publish_tour(tour_id, current_user.user_id)
+
+
+@router.post("/{tour_id}/archive", response_model=TourResponse)
+async def archive_tour(
+    tour_id: str,
+    current_user: TokenData = Depends(require_role("ROLE_GUIDE")),
+):
+    """Autor arhivira objavljenu turu."""
+    return await tour_service.archive_tour(tour_id, current_user.user_id)
+
+
+@router.post("/{tour_id}/reactivate", response_model=TourResponse)
+async def reactivate_tour(
+    tour_id: str,
+    current_user: TokenData = Depends(require_role("ROLE_GUIDE")),
+):
+    """Autor ponovo aktivira arhiviranu turu."""
+    return await tour_service.reactivate_tour(tour_id, current_user.user_id)
 
 
 @router.delete("/{tour_id}", status_code=204)
