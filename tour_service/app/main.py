@@ -1,7 +1,9 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from app.config import settings
 from app.database import connect_to_mongo, close_mongo_connection
+from app.grpc.tour_server import start_grpc_server
 from app.routes.tour_routes import router as tour_router
 from app.routes.review_routes import router as review_router
 from app.routes.simulator_routes import router as simulator_router
@@ -11,7 +13,11 @@ from app.routes.simulator_routes import router as simulator_router
 async def lifespan(app: FastAPI):
     # Startup
     await connect_to_mongo()
-    yield
+    grpc_server = await start_grpc_server(settings.GRPC_SERVER_PORT)
+    try:
+        yield
+    finally:
+        await grpc_server.stop(grace=5)
     # Shutdown
     await close_mongo_connection()
 

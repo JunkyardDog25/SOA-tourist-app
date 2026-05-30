@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package tour;
+
+option go_package = "api-gateway/grpc/tour";
+
+service TourQueryService {
+  rpc GetPublishedTours (GetPublishedToursRequest) returns (TourListResponse);
+  rpc GetTourById (GetTourByIdRequest) returns (TourDetailsResponse);
+}
+
+message GetPublishedToursRequest {
+  string user_id = 1;
+  repeated string roles = 2;
+}
+
+message GetTourByIdRequest {
+  string tour_id = 1;
+  string user_id = 2;
+  repeated string roles = 3;
+}
+
+message TourListResponse {
+  repeated TourPublic tours = 1;
+}
+
+message TourDetailsResponse {
+  bool public_view = 1;
+  TourFull full_tour = 2;
+  TourPublic public_tour = 3;
+}
+
+message TourFull {
+  string id = 1;
+  string author_id = 2;
+  string title = 3;
+  string description = 4;
+  string difficulty = 5;
+  repeated string tags = 6;
+  string status = 7;
+  double price = 8;
+  double distance_km = 9;
+  repeated TourDuration durations = 10;
+  repeated Keypoint keypoints = 11;
+  optional string published_at = 12;
+  optional string archived_at = 13;
+  string created_at = 14;
+  string updated_at = 15;
+}
+
+message TourPublic {
+  string id = 1;
+  string author_id = 2;
+  string title = 3;
+  string description = 4;
+  string difficulty = 5;
+  repeated string tags = 6;
+  string status = 7;
+  double price = 8;
+  double distance_km = 9;
+  repeated TourDuration durations = 10;
+  Keypoint first_keypoint = 11;
+  optional string published_at = 12;
+}
+
+message TourDuration {
+  string transport_type = 1;
+  int32 minutes = 2;
+}
+
+message Keypoint {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double latitude = 4;
+  double longitude = 5;
+  string image_url = 6;
+}
