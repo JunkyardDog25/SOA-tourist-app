@@ -28,4 +28,6 @@ public class TourPurchaseToken {
     private double price;
 
     private Instant purchasedAt;
+
+    private String sagaId;
 }

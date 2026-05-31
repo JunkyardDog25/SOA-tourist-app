@@ -26,6 +26,7 @@ async def connect_to_mongo():
         unique=True,
         name="uniq_tourist_location",
     )
+    await db.purchase_records.create_index("saga_id", name="idx_purchase_records_saga_id")
 
     print(f"Connected to MongoDB: {settings.MONGO_DB}")
 

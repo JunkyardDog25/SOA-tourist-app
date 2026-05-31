@@ -105,7 +105,7 @@ public class CartService {
                 continue;
             }
             TourPurchaseToken token = new TourPurchaseToken(
-                    null, touristId, item.getTourId(), item.getTourName(), item.getPrice(), now
+                    null, touristId, item.getTourId(), item.getTourName(), item.getPrice(), now, null
             );
             tokens.add(tokenRepository.save(token));
         }

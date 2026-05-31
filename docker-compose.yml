@@ -272,6 +272,7 @@ services:
       SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      TOUR_SERVICE_URL: http://tour-service:8084
     depends_on:
       purchase-neo4j:
         condition: service_healthy

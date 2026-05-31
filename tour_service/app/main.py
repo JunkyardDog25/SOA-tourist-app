@@ -7,6 +7,7 @@ from app.grpc.tour_server import start_grpc_server
 from app.routes.tour_routes import router as tour_router
 from app.routes.review_routes import router as review_router
 from app.routes.simulator_routes import router as simulator_router
+from app.routes.saga_routes import router as saga_router
 
 
 @asynccontextmanager
@@ -39,9 +40,10 @@ app.add_middleware(
 )
 
 # Registracija ruta
-app.include_router(tour_router,prefix="/api")
+app.include_router(tour_router, prefix="/api")
 app.include_router(review_router, prefix="/api")
 app.include_router(simulator_router, prefix="/api")
+app.include_router(saga_router, prefix="/api")
 
 
 @app.get("/health")

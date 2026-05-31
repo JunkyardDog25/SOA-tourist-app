@@ -14,4 +14,8 @@ public interface TourPurchaseTokenRepository extends Neo4jRepository<TourPurchas
     Optional<TourPurchaseToken> findByTouristIdAndTourId(String touristId, String tourId);
     
     boolean existsByTouristIdAndTourId(String touristId, String tourId);
+
+    List<TourPurchaseToken> findBySagaId(String sagaId);
+
+    void deleteBySagaId(String sagaId);
 }

@@ -14,11 +14,16 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.soa.purchaseService.dtos.AddToCartRequest;
 import com.soa.purchaseService.dtos.CartResponse;
-import com.soa.purchaseService.dtos.TokenResponse;
+import com.soa.purchaseService.dtos.CheckoutResult;
+import com.soa.purchaseService.models.ShoppingCart;
+import com.soa.purchaseService.repositories.ShoppingCartRepository;
 import com.soa.purchaseService.services.CartService;
+import com.soa.purchaseService.services.CheckoutSagaOrchestrator;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 @RestController
 @RequestMapping("/cart")
@@ -26,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 public class CartController {
 
     private final CartService cartService;
+    private final CheckoutSagaOrchestrator sagaOrchestrator;
+    private final ShoppingCartRepository cartRepository;
 
     @PostMapping
     public ResponseEntity<CartResponse> createCart(@AuthenticationPrincipal String touristId) {
@@ -52,7 +59,12 @@ public class CartController {
     }
 
     @PostMapping("/checkout")
-    public ResponseEntity<List<TokenResponse>> checkout(@AuthenticationPrincipal String touristId) {
-        return ResponseEntity.ok(cartService.checkout(touristId));
+    public ResponseEntity<CheckoutResult> checkout(@AuthenticationPrincipal String touristId) {
+        ShoppingCart cart = cartRepository.findByTouristId(touristId)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart not found"));
+        if (cart.getItems().isEmpty()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Cart is empty");
+        }
+        return ResponseEntity.ok(sagaOrchestrator.execute(touristId, cart));
     }
 }
