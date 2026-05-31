@@ -20,6 +20,7 @@ func main() {
 	stakeholdersProxy := proxy.New(cfg.StakeholdersServiceURL)
 	followersProxy := proxy.New(cfg.FollowersServiceURL)
 	tourProxy := proxy.New(cfg.TourServiceURL)
+	purchaseProxy := proxy.New(cfg.PurchaseServiceURL)
 
 	followersGRPC := servicegrpc.NewFollowersClient(cfg.FollowersServiceGRPCHost, cfg.FollowersServiceGRPCPort)
 	defer followersGRPC.Close()
@@ -104,7 +105,7 @@ func main() {
 	proxy.MountProxy(r, "/api/tours", tourProxy)
 	proxy.MountProxy(r, "/api/reviews", tourProxy)
 	proxy.MountProxy(r, "/api/simulator", tourProxy)
-	proxy.MountProxy(r, "/api/purchases", proxy.New(cfg.PurchaseServiceURL))
+	proxy.MountProxy(r, "/api/purchases", purchaseProxy)
 
 	log.Printf("API Gateway running on :%s", cfg.Port)
 	log.Fatal(http.ListenAndServe(":"+cfg.Port, r))

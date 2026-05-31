@@ -4,7 +4,7 @@ from app.models.tour import (
     TourCreate, TourUpdate, TourResponse, TourPublicResponse, TourDurationsUpdate,
     KeypointCreate, KeypointUpdate, KeypointResponse,
 )
-from app.services import tour_service
+from app.services import tour_service, purchase_service
 
 router = APIRouter(prefix="/tours", tags=["Tours"])
 
@@ -41,7 +41,7 @@ async def get_tour(
     tour_id: str,
     current_user: TokenData = Depends(get_current_user),
 ):
-    """Dohvati turu. Turisti za objavljenu turu vide samo prvu ključnu tačku."""
+    """Dohvati turu. Turista vidi sve ključne tačke samo ako je turu kupio."""
     tour = await tour_service.get_tour_by_id(tour_id)
     is_owner_or_admin = (
         tour["author_id"] == current_user.user_id or "ROLE_ADMIN" in current_user.roles
@@ -54,9 +54,16 @@ async def get_tour(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have access to this tour",
         )
-    if not is_owner_or_admin:
-        return tour_service.get_public_tour_response(tour)
-    return tour
+    if is_owner_or_admin:
+        return tour
+
+    # Tourist: check if purchased → reveal all keypoints
+    if "ROLE_TOURIST" in current_user.roles:
+        purchased = await purchase_service.has_purchased_tour(current_user.user_id, tour_id)
+        if purchased:
+            return tour
+
+    return tour_service.get_public_tour_response(tour)
 
 
 @router.put("/{tour_id}", response_model=TourResponse)
