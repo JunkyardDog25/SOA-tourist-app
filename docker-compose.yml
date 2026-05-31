@@ -11,6 +11,7 @@ services:
       BLOG_SERVICE_URL: http://blog-service:8080
       STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080
       FOLLOWERS_SERVICE_URL: http://followers-service:8080
+      PURCHASE_SERVICE_URL: http://purchase-service:8080
       FOLLOWERS_SERVICE_GRPC_HOST: followers-service
       FOLLOWERS_SERVICE_GRPC_PORT: 9091
       TOUR_SERVICE_URL: http://tour-service:8084
@@ -22,6 +23,7 @@ services:
       - stakeholders-service
       - followers-service
       - tour-service
+      - purchase-service
     networks:
       - shared-net
 
@@ -227,6 +229,7 @@ services:
       MONGO_DB: ${MONGO_DB}
       JWT_SECRET: ${JWT_SECRET}
       GRPC_SERVER_PORT: 9092
+      PURCHASE_SERVICE_URL: http://purchase-service:8080
     expose:
       - "9092"
     depends_on:
@@ -234,6 +237,47 @@ services:
         condition: service_healthy
     networks:
       - tour-net
+      - shared-net
+
+  # ── Neo4j za Purchase servis ────────────────────────────────────────────────
+  purchase-neo4j:
+    image: neo4j:5
+    container_name: purchase-neo4j
+    environment:
+      NEO4J_AUTH: ${NEO4J_USERNAME}/${NEO4J_PASSWORD}
+    ports:
+      - "7478:7474"
+      - "7691:7687"
+    volumes:
+      - purchase-neo4j-data:/data
+    networks:
+      - purchase-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:7474 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Purchase servis ───────────────────────────────────────────────────────────
+  purchase-service:
+    build: ./purchase_service
+    container_name: purchase-service
+    environment:
+      NEO4J_URI: bolt://purchase-neo4j:7687
+      NEO4J_USERNAME: ${NEO4J_USERNAME}
+      NEO4J_PASSWORD: ${NEO4J_PASSWORD}
+      SPRING_NEO4J_URI: bolt://purchase-neo4j:7687
+      SPRING_NEO4J_AUTHENTICATION_USERNAME: ${NEO4J_USERNAME}
+      SPRING_NEO4J_AUTHENTICATION_PASSWORD: ${NEO4J_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
+      TOUR_SERVICE_URL: http://tour-service:8084
+    depends_on:
+      purchase-neo4j:
+        condition: service_healthy
+    networks:
+      - purchase-net
       - shared-net
 
   # ── Frontend (mapa tura) ──────────────────────────────────────────────────────
@@ -256,6 +300,7 @@ volumes:
   auth-neo4j-data:
   followers-neo4j-data:
   mongo-tour-data:
+  purchase-neo4j-data:
 
 networks:
   stakeholders-net:
@@ -263,4 +308,5 @@ networks:
   auth-net:
   followers-net:
   tour-net:
+  purchase-net:
   shared-net:

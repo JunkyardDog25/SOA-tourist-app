@@ -4,7 +4,7 @@ import grpc
 from fastapi import HTTPException
 
 from app.grpc.generated import tour_pb2, tour_pb2_grpc
-from app.services import tour_service
+from app.services import tour_service, purchase_service
 
 
 def _grpc_status_from_http(status_code: int) -> grpc.StatusCode:
@@ -145,16 +145,27 @@ class TourQueryService(tour_pb2_grpc.TourQueryServiceServicer):
                     "You do not have access to this tour",
                 )
 
-            if not is_owner_or_admin:
-                public_tour = tour_service.get_public_tour_response(tour)
+            if is_owner_or_admin:
                 return tour_pb2.TourDetailsResponse(
-                    public_view=True,
-                    public_tour=_public_tour_to_proto(public_tour),
+                    public_view=False,
+                    full_tour=_full_tour_to_proto(tour),
                 )
 
+            # Tourist: check if tour is purchased → reveal all keypoints
+            if "ROLE_TOURIST" in request.roles:
+                purchased = await purchase_service.has_purchased_tour(
+                    request.user_id, request.tour_id
+                )
+                if purchased:
+                    return tour_pb2.TourDetailsResponse(
+                        public_view=False,
+                        full_tour=_full_tour_to_proto(tour),
+                    )
+
+            public_tour = tour_service.get_public_tour_response(tour)
             return tour_pb2.TourDetailsResponse(
-                public_view=False,
-                full_tour=_full_tour_to_proto(tour),
+                public_view=True,
+                public_tour=_public_tour_to_proto(public_tour),
             )
         except HTTPException as exc:
             await context.abort(
