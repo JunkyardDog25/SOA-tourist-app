@@ -175,8 +175,11 @@ class TourQueryService(tour_pb2_grpc.TourQueryServiceServicer):
 
 
 async def start_grpc_server(port: int) -> grpc.aio.Server:
+    from app.grpc.execution_server import register_execution_service
+
     server = grpc.aio.server()
     tour_pb2_grpc.add_TourQueryServiceServicer_to_server(TourQueryService(), server)
+    register_execution_service(server)
     server.add_insecure_port(f"[::]:{port}")
     await server.start()
     print(f"Tour gRPC server started on port {port}")

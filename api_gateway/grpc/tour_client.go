@@ -15,8 +15,9 @@ import (
 )
 
 type TourClient struct {
-	conn   *grpc.ClientConn
-	client tour.TourQueryServiceClient
+	conn             *grpc.ClientConn
+	client           tour.TourQueryServiceClient
+	executionClient  tour.TourExecutionServiceClient
 }
 
 type TourDurationResponse struct {
@@ -77,8 +78,9 @@ func NewTourClient(host string, port int) *TourClient {
 			log.Fatalf("Failed to connect to tour gRPC server at %s: %v", target, err)
 		}
 		tourClient = &TourClient{
-			conn:   conn,
-			client: tour.NewTourQueryServiceClient(conn),
+			conn:            conn,
+			client:          tour.NewTourQueryServiceClient(conn),
+			executionClient: tour.NewTourExecutionServiceClient(conn),
 		}
 		log.Printf("Tour gRPC client connected to %s", target)
 	})
@@ -121,6 +123,89 @@ func (c *TourClient) GetTourByID(tourID, userID string, roles []string) (interfa
 		return publicTourFromProto(response.GetPublicTour()), nil
 	}
 	return fullTourFromProto(response.GetFullTour()), nil
+}
+
+type VisitedKeypointResponse struct {
+	KeypointID string `json:"keypoint_id"`
+	VisitedAt  string `json:"visited_at"`
+}
+
+type TourExecutionResponse struct {
+	ID                string                    `json:"id"`
+	TourID            string                    `json:"tour_id"`
+	TouristID         string                    `json:"tourist_id"`
+	Status            string                    `json:"status"`
+	StartedAt         string                    `json:"started_at"`
+	CompletedAt       *string                   `json:"completed_at"`
+	AbandonedAt       *string                   `json:"abandoned_at"`
+	LastActivityAt    string                    `json:"last_activity_at"`
+	StartLatitude     float64                   `json:"start_latitude"`
+	StartLongitude    float64                   `json:"start_longitude"`
+	VisitedKeypoints  []VisitedKeypointResponse `json:"visited_keypoints"`
+	SagaID            *string                   `json:"saga_id"`
+}
+
+func (c *TourClient) StartExecution(tourID, userID string, latitude, longitude float64) (*TourExecutionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	response, err := c.executionClient.StartExecution(ctx, &tour.StartExecutionRequest{
+		TourId:    tourID,
+		TouristId: userID,
+		Latitude:  latitude,
+		Longitude: longitude,
+	})
+	if err != nil {
+		return nil, mapTourError(err)
+	}
+	return executionFromProto(response), nil
+}
+
+func (c *TourClient) GetActiveExecution(userID string) (*TourExecutionResponse, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	response, err := c.executionClient.GetActiveExecution(ctx, &tour.GetActiveExecutionRequest{
+		TouristId: userID,
+	})
+	if err != nil {
+		return nil, mapTourError(err)
+	}
+	return executionFromProto(response), nil
+}
+
+func executionFromProto(item *tour.TourExecutionMessage) *TourExecutionResponse {
+	if item == nil {
+		return nil
+	}
+	visited := make([]VisitedKeypointResponse, 0, len(item.GetVisitedKeypoints()))
+	for _, v := range item.GetVisitedKeypoints() {
+		visited = append(visited, VisitedKeypointResponse{
+			KeypointID: v.GetKeypointId(),
+			VisitedAt:  v.GetVisitedAt(),
+		})
+	}
+	resp := &TourExecutionResponse{
+		ID:               item.GetId(),
+		TourID:           item.GetTourId(),
+		TouristID:        item.GetTouristId(),
+		Status:           item.GetStatus(),
+		StartedAt:        item.GetStartedAt(),
+		LastActivityAt:   item.GetLastActivityAt(),
+		StartLatitude:    item.GetStartLatitude(),
+		StartLongitude:   item.GetStartLongitude(),
+		VisitedKeypoints: visited,
+	}
+	if item.CompletedAt != nil {
+		resp.CompletedAt = item.CompletedAt
+	}
+	if item.AbandonedAt != nil {
+		resp.AbandonedAt = item.AbandonedAt
+	}
+	if item.SagaId != nil {
+		resp.SagaID = item.SagaId
+	}
+	return resp
 }
 
 func (c *TourClient) Close() {

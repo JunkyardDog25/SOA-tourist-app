@@ -29,6 +29,8 @@ const kpLatitude = document.getElementById("kp-latitude");
 const kpLongitude = document.getElementById("kp-longitude");
 const formError = document.getElementById("form-error");
 const durationError = document.getElementById("duration-error");
+const priceError = document.getElementById("price-error");
+const tourPriceInput = document.getElementById("tour-price");
 const lifecycleError = document.getElementById("lifecycle-error");
 const durationInputs = {
   walking: document.getElementById("duration-walking"),
@@ -90,6 +92,10 @@ async function init() {
   document.getElementById("duration-form").addEventListener("submit", (e) => {
     e.preventDefault();
     saveDurationForm();
+  });
+  document.getElementById("price-form").addEventListener("submit", (e) => {
+    e.preventDefault();
+    savePriceForm();
   });
   lifecycleButtons.publish.addEventListener("click", () => runLifecycleAction("publish"));
   lifecycleButtons.archive.addEventListener("click", () => runLifecycleAction("archive"));
@@ -263,6 +269,7 @@ function renderEditor() {
   tourTimestamps.textContent = formatTourTimestamps(currentTour);
 
   populateDurationForm();
+  populatePriceForm();
   updateLifecycleButtons();
   renderKeypointsSidebar();
   tourMap.renderKeypoints(keypoints, selectedKeypointId);
@@ -280,6 +287,29 @@ function populateDurationForm() {
     input.value = duration?.minutes || "";
   });
   durationError.textContent = "";
+}
+
+function populatePriceForm() {
+  tourPriceInput.value =
+    currentTour?.price != null && currentTour.price > 0 ? currentTour.price : "";
+  priceError.textContent = "";
+}
+
+async function savePriceForm() {
+  if (!currentTour) return;
+  priceError.textContent = "";
+  const price = Number(tourPriceInput.value);
+  if (!Number.isFinite(price) || price <= 0) {
+    priceError.textContent = "Unesi cenu veću od 0 pre objavljivanja.";
+    return;
+  }
+  try {
+    currentTour = await api.updateTour(currentTour.id, { price });
+    renderEditor();
+    setMapHint("Cena ture je sačuvana.", "success");
+  } catch (err) {
+    priceError.textContent = err.message;
+  }
 }
 
 function updateLifecycleButtons() {

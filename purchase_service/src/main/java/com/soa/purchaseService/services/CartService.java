@@ -31,16 +31,16 @@ public class CartService {
     private final TourPurchaseTokenRepository tokenRepository;
 
     public CartResponse createCart(String touristId) {
-        if (cartRepository.existsByTouristId(touristId)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Cart already exists");
-        }
-        ShoppingCart cart = new ShoppingCart();
-        cart.setTouristId(touristId);
-        cart.setTotalPrice(0.0);
-        cart.setItems(new ArrayList<>());
-        
-        cartRepository.save(cart);
-        return toResponse(cart);
+        return cartRepository.findByTouristId(touristId)
+                .map(this::toResponse)
+                .orElseGet(() -> {
+                    ShoppingCart cart = new ShoppingCart();
+                    cart.setTouristId(touristId);
+                    cart.setTotalPrice(0.0);
+                    cart.setItems(new ArrayList<>());
+                    cartRepository.save(cart);
+                    return toResponse(cart);
+                });
     }
 
     @Transactional(readOnly = true)

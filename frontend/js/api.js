@@ -108,4 +108,27 @@ export const api = {
       method: "PUT",
       body: JSON.stringify(body),
     }),
+
+  getPurchaseTokens: () => request("/purchases/tokens"),
+  startTourExecution: (tourId, body) =>
+    request(`/tours/${tourId}/executions`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  getActiveExecution: () => request("/executions/active"),
+  getActiveExecutionForTour: (tourId) =>
+    request(`/tours/${tourId}/executions/active`),
+  checkProximity: (tourId, executionId, body) =>
+    request(`/tours/${tourId}/executions/${executionId}/check-proximity`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  completeTourExecution: (tourId, executionId) =>
+    request(`/tours/${tourId}/executions/${executionId}/complete`, {
+      method: "POST",
+    }),
+  abandonTourExecution: (tourId, executionId) =>
+    request(`/tours/${tourId}/executions/${executionId}/abandon`, {
+      method: "POST",
+    }),
 };

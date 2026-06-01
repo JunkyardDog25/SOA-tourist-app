@@ -133,17 +133,22 @@ def _validate_publishable(tour: dict):
         missing.append("description")
     if not tour.get("difficulty"):
         missing.append("difficulty")
-    if not tour.get("tags"):
-        missing.append("tags")
     if len(tour.get("keypoints", [])) < 2:
         missing.append("at least two keypoints")
-    if not tour.get("durations"):
-        missing.append("at least one tour duration")
 
     if missing:
         raise HTTPException(
             status_code=400,
             detail="Tour cannot be published. Missing: " + ", ".join(missing),
+        )
+
+
+def _validate_price_for_sale(tour: dict):
+    price = float(tour.get("price", 0.0))
+    if price <= 0:
+        raise HTTPException(
+            status_code=400,
+            detail="Set tour price greater than 0 before publishing (PUT /api/tours/{id} with {\"price\": ...})",
         )
 
 
@@ -280,20 +285,9 @@ async def update_tour_durations(
     return await get_tour_by_id(tour_id)
 
 
-async def publish_tour(tour_id: str, author_id: str) -> dict:
-    db = get_db()
-    tour_obj_id = _parse_tour_id(tour_id)
-    tour = await db.tours.find_one({"_id": tour_obj_id})
-
-    if not tour:
-        raise HTTPException(status_code=404, detail="Tour not found")
-    if tour["author_id"] != author_id:
-        raise HTTPException(status_code=403, detail="Not your tour")
-    if tour.get("status") != "draft":
-        raise HTTPException(status_code=400, detail="Only draft tours can be published")
-
-    _validate_publishable(tour)
+async def _set_tour_published(tour_obj_id: ObjectId) -> None:
     now = datetime.now(timezone.utc)
+    db = get_db()
     await db.tours.update_one(
         {"_id": tour_obj_id},
         {
@@ -304,6 +298,32 @@ async def publish_tour(tour_id: str, author_id: str) -> dict:
             }
         },
     )
+
+
+async def publish_tour(tour_id: str, author_id: str) -> dict:
+    db = get_db()
+    tour_obj_id = _parse_tour_id(tour_id)
+    tour = await db.tours.find_one({"_id": tour_obj_id})
+
+    if not tour:
+        raise HTTPException(status_code=404, detail="Tour not found")
+    if tour["author_id"] != author_id:
+        raise HTTPException(status_code=403, detail="Not your tour")
+
+    status = tour.get("status")
+    if status == "published":
+        return await get_tour_by_id(tour_id)
+    if status == "archived":
+        _validate_publishable(tour)
+        _validate_price_for_sale(tour)
+        await _set_tour_published(tour_obj_id)
+        return await get_tour_by_id(tour_id)
+    if status != "draft":
+        raise HTTPException(status_code=400, detail="Only draft tours can be published")
+
+    _validate_publishable(tour)
+    _validate_price_for_sale(tour)
+    await _set_tour_published(tour_obj_id)
     return await get_tour_by_id(tour_id)
 
 
@@ -346,17 +366,8 @@ async def reactivate_tour(tour_id: str, author_id: str) -> dict:
         raise HTTPException(status_code=400, detail="Only archived tours can be reactivated")
 
     _validate_publishable(tour)
-    now = datetime.now(timezone.utc)
-    await db.tours.update_one(
-        {"_id": tour_obj_id},
-        {
-            "$set": {
-                "status": "published",
-                "published_at": now,
-                "updated_at": now,
-            }
-        },
-    )
+    _validate_price_for_sale(tour)
+    await _set_tour_published(tour_obj_id)
     return await get_tour_by_id(tour_id)
 
 

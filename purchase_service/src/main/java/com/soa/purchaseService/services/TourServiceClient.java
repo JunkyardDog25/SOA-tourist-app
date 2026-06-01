@@ -49,7 +49,7 @@ public class TourServiceClient {
     public TourValidationResponse validateBatch(TourValidationRequest request) {
         try {
             return restClient.post()
-                    .uri("/api/tours/validate-batch")
+                    .uri("/api/tours/internal/validate-batch")
                     .body(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, resp) -> {
@@ -73,7 +73,7 @@ public class TourServiceClient {
     public RecordPurchasesResponse recordPurchases(RecordPurchasesRequest request) {
         try {
             return restClient.post()
-                    .uri("/api/tours/purchases/record")
+                    .uri("/api/tours/internal/purchases/record")
                     .body(request)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, resp) -> {
@@ -96,7 +96,7 @@ public class TourServiceClient {
     public void deletePurchaseRecords(String sagaId) {
         try {
             restClient.delete()
-                    .uri("/api/tours/purchases/record/{sagaId}", sagaId)
+                    .uri("/api/tours/internal/purchases/record/{sagaId}", sagaId)
                     .retrieve()
                     .onStatus(HttpStatusCode::isError, (req, resp) -> {
                         log.warn("tour-service delete-purchase-records for sagaId={} returned HTTP {}",

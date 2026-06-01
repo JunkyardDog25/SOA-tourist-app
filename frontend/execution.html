@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="sr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Izvođenje ture – turista</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <link rel="stylesheet" href="./css/app.css" />
+    <style>
+      #execution-map {
+        min-height: 480px;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+      }
+      .tourist-marker {
+        background: #16a34a;
+        color: #fff;
+        border-radius: 50%;
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.7rem;
+        border: 2px solid #fff;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      }
+      .kp-done {
+        opacity: 0.55;
+      }
+    </style>
+  </head>
+  <body>
+    <header class="app-header">
+      <h1>Izvođenje ture</h1>
+      <p class="subtitle">Pokreni kupljenu turu i obilazi ključne tačke (ROLE_TOURIST)</p>
+    </header>
+
+    <main class="app-main">
+      <section id="view-auth" class="panel">
+        <h2>Prijava</h2>
+        <p>Unesi JWT token turiste.</p>
+        <label class="field">
+          <span>Bearer token</span>
+          <textarea id="token-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIs..."></textarea>
+        </label>
+        <p id="auth-error" class="error"></p>
+        <button type="button" id="btn-save-token" class="btn primary">Nastavi</button>
+        <p class="meta" style="margin-top: 1rem">
+          <a href="simulator.html">Simulator lokacije →</a>
+          ·
+          <a href="index.html">Editor tura (vodič) →</a>
+        </p>
+      </section>
+
+      <section id="view-list" class="panel hidden">
+        <div class="panel-head">
+          <h2>Kupljene ture</h2>
+          <button type="button" id="btn-logout" class="btn ghost">Odjava</button>
+        </div>
+        <p id="list-error" class="error"></p>
+        <ul id="tokens-list" class="tours-list"></ul>
+      </section>
+
+      <section id="view-active" class="panel hidden editor-layout">
+        <div class="panel-head">
+          <div>
+            <button type="button" id="btn-back-list" class="btn ghost">← Nazad</button>
+            <h2 id="active-tour-title">Aktivna tura</h2>
+            <p id="active-status" class="meta"></p>
+          </div>
+          <div class="actions">
+            <button type="button" id="btn-complete" class="btn primary">Završi turu</button>
+            <button type="button" id="btn-abandon" class="btn danger">Napusti turu</button>
+          </div>
+        </div>
+        <p id="active-error" class="error"></p>
+        <div class="editor-grid">
+          <aside class="sidebar">
+            <h3>Ključne tačke</h3>
+            <ul id="keypoints-progress" class="keypoints-list"></ul>
+            <p id="proximity-status" class="meta"></p>
+          </aside>
+          <div class="map-wrap">
+            <div id="execution-map"></div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script type="module" src="./js/execution-app.js"></script>
+  </body>
+</html>

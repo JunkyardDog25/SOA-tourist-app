@@ -9,6 +9,11 @@ service TourQueryService {
   rpc GetTourById (GetTourByIdRequest) returns (TourDetailsResponse);
 }
 
+service TourExecutionService {
+  rpc StartExecution (StartExecutionRequest) returns (TourExecutionMessage);
+  rpc GetActiveExecution (GetActiveExecutionRequest) returns (TourExecutionMessage);
+}
+
 message GetPublishedToursRequest {
   string user_id = 1;
   repeated string roles = 2;
@@ -75,4 +80,35 @@ message Keypoint {
   double latitude = 4;
   double longitude = 5;
   string image_url = 6;
+}
+
+message StartExecutionRequest {
+  string tour_id = 1;
+  string tourist_id = 2;
+  double latitude = 3;
+  double longitude = 4;
+}
+
+message GetActiveExecutionRequest {
+  string tourist_id = 1;
+}
+
+message VisitedKeypointMessage {
+  string keypoint_id = 1;
+  string visited_at = 2;
+}
+
+message TourExecutionMessage {
+  string id = 1;
+  string tour_id = 2;
+  string tourist_id = 3;
+  string status = 4;
+  string started_at = 5;
+  optional string completed_at = 6;
+  optional string abandoned_at = 7;
+  string last_activity_at = 8;
+  double start_latitude = 9;
+  double start_longitude = 10;
+  repeated VisitedKeypointMessage visited_keypoints = 11;
+  optional string saga_id = 12;
 }

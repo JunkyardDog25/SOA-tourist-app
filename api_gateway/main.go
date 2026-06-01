@@ -81,6 +81,51 @@ func main() {
 		tourProxy.ServeHTTP(w, r)
 	})
 
+	r.Post("/api/tours/{tour_id}/executions", func(w http.ResponseWriter, r *http.Request) {
+		tourID := chi.URLParam(r, "tour_id")
+		userID, ok := middleware.UserIDFromContext(r.Context())
+		if !ok || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		var body struct {
+			Latitude  float64 `json:"latitude"`
+			Longitude float64 `json:"longitude"`
+		}
+		if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+			http.Error(w, "Invalid request body", http.StatusBadRequest)
+			return
+		}
+
+		execution, err := tourGRPC.StartExecution(tourID, userID, body.Latitude, body.Longitude)
+		if err != nil {
+			writeTourError(w, err)
+			return
+		}
+		w.WriteHeader(http.StatusCreated)
+		writeJSON(w, execution)
+	})
+
+	r.Get("/api/executions/active", func(w http.ResponseWriter, r *http.Request) {
+		userID, ok := middleware.UserIDFromContext(r.Context())
+		if !ok || userID == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		execution, err := tourGRPC.GetActiveExecution(userID)
+		if err != nil {
+			if tourErr, ok := err.(*servicegrpc.TourError); ok && tourErr.Code == http.StatusNotFound {
+				w.WriteHeader(http.StatusNoContent)
+				return
+			}
+			writeTourError(w, err)
+			return
+		}
+		writeJSON(w, execution)
+	})
+
 	r.Get("/api/tours/{tour_id}", func(w http.ResponseWriter, r *http.Request) {
 		tourID := chi.URLParam(r, "tour_id")
 		userID, ok := middleware.UserIDFromContext(r.Context())
@@ -102,6 +147,7 @@ func main() {
 	proxy.MountProxy(r, "/api/blogs", blogProxy)
 	proxy.MountProxy(r, "/api/stakeholders", stakeholdersProxy)
 	proxy.MountProxy(r, "/api/followers", followersProxy)
+	proxy.MountProxy(r, "/api/executions", tourProxy)
 	proxy.MountProxy(r, "/api/tours", tourProxy)
 	proxy.MountProxy(r, "/api/reviews", tourProxy)
 	proxy.MountProxy(r, "/api/simulator", tourProxy)

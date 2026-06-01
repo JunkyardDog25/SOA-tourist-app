@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package purchase;
+
+option java_package = "com.soa.purchaseService.grpc";
+option java_multiple_files = true;
+
+service PurchaseQueryService {
+  rpc HasPurchasedTour (HasPurchasedTourRequest) returns (HasPurchasedTourResponse);
+  rpc HasPurchasedToursBatch (HasPurchasedToursBatchRequest) returns (HasPurchasedToursBatchResponse);
+}
+
+message HasPurchasedTourRequest {
+  string tourist_id = 1;
+  string tour_id = 2;
+}
+
+message HasPurchasedTourResponse {
+  bool purchased = 1;
+}
+
+message HasPurchasedToursBatchRequest {
+  string tourist_id = 1;
+  repeated string tour_ids = 2;
+}
+
+message HasPurchasedToursBatchResponse {
+  map<string, bool> purchased_by_tour_id = 1;
+}
