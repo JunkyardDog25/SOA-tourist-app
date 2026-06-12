@@ -221,7 +221,7 @@ services:
   # ── Tour servis ───────────────────────────────────────────────────────────────
   tour-service:
     build: ./tour_service
-    container_name: tour-service
+    container_name: soa-tour-service
     ports:
       - "8084:8084"
     environment:
@@ -230,13 +230,142 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       GRPC_SERVER_PORT: 9092
       PURCHASE_SERVICE_URL: http://purchase-service:8080
+      OTEL_SERVICE_NAME: tour-service
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://tempo:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      OTEL_PYTHON_LOG_CORRELATION: "true"
     expose:
       - "9092"
     depends_on:
       mongo-tour:
         condition: service_healthy
+      tempo:
+        condition: service_started
+      loki:
+        condition: service_started
     networks:
       - tour-net
+      - shared-net
+
+  # ── Observability: metrika scraping ────────────────────────────────────────
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=48h
+      - --web.enable-lifecycle
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    mem_limit: 512m
+    networks:
+      - shared-net
+
+  # ── Observability: vizualizacija ───────────────────────────────────────────
+  grafana:
+    image: grafana/grafana:latest
+    container_name: soa-grafana
+    ports:
+      - "3001:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+      - loki
+      - tempo
+    mem_limit: 512m
+    networks:
+      - shared-net
+
+  # ── Observability: tracing backend ─────────────────────────────────────────
+  tempo:
+    image: grafana/tempo:2.6.1
+    container_name: tempo
+    command:
+      - -config.file=/etc/tempo/tempo.yml
+    ports:
+      - "3200:3200"
+      - "4317:4317"
+      - "4318:4318"
+    volumes:
+      - ./observability/tempo/tempo.yml:/etc/tempo/tempo.yml:ro
+      - tempo-data:/var/tempo
+    mem_limit: 512m
+    networks:
+      - shared-net
+
+  # ── Observability: log backend ─────────────────────────────────────────────
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    command:
+      - -config.file=/etc/loki/loki-config.yml
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./observability/loki/loki-config.yml:/etc/loki/loki-config.yml:ro
+      - loki-data:/loki
+    mem_limit: 512m
+    networks:
+      - shared-net
+
+  # ── Observability: Docker log discovery ────────────────────────────────────
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    command:
+      - -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - promtail-positions:/run/promtail
+    depends_on:
+      - loki
+    mem_limit: 256m
+    networks:
+      - shared-net
+
+  # ── Observability: container metrike ───────────────────────────────────────
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    ports:
+      - "8089:8080"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:ro
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev/disk/:/dev/disk:ro
+    privileged: true
+    devices:
+      - /dev/kmsg:/dev/kmsg
+    mem_limit: 512m
+    networks:
+      - shared-net
+
+  # ── Observability: Docker/WSL host metrike ─────────────────────────────────
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: node-exporter
+    command:
+      - --path.rootfs=/host
+    ports:
+      - "9100:9100"
+    volumes:
+      - /:/host:ro
+    mem_limit: 128m
+    networks:
       - shared-net
 
   # ── Neo4j za Purchase servis ────────────────────────────────────────────────
@@ -301,6 +430,11 @@ volumes:
   followers-neo4j-data:
   mongo-tour-data:
   purchase-neo4j-data:
+  prometheus-data:
+  grafana-data:
+  tempo-data:
+  loki-data:
+  promtail-positions:
 
 networks:
   stakeholders-net:

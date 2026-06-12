@@ -1,5 +1,10 @@
+import logging
+
 import httpx
 from app.config import settings
+
+
+logger = logging.getLogger(__name__)
 
 
 async def has_purchased_tour(tourist_id: str, tour_id: str) -> bool:
@@ -15,6 +20,11 @@ async def has_purchased_tour(tourist_id: str, tour_id: str) -> bool:
             )
             if resp.status_code == 200:
                 return resp.json().get("purchased", False)
-    except Exception:
-        pass
+    except Exception as exc:
+        logger.warning(
+            "Purchase check failed for tourist_id=%s tour_id=%s: %s",
+            tourist_id,
+            tour_id,
+            exc,
+        )
     return False
