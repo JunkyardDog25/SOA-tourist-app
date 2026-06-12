@@ -1,10 +1,14 @@
 from datetime import datetime
+import logging
 
 import grpc
 from fastapi import HTTPException
 
 from app.grpc.generated import tour_pb2, tour_pb2_grpc
 from app.services import tour_service, purchase_service
+
+
+logger = logging.getLogger(__name__)
 
 
 def _grpc_status_from_http(status_code: int) -> grpc.StatusCode:
@@ -179,5 +183,5 @@ async def start_grpc_server(port: int) -> grpc.aio.Server:
     tour_pb2_grpc.add_TourQueryServiceServicer_to_server(TourQueryService(), server)
     server.add_insecure_port(f"[::]:{port}")
     await server.start()
-    print(f"Tour gRPC server started on port {port}")
+    logger.info("Tour gRPC server started on port %s", port)
     return server

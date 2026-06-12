@@ -1,9 +1,14 @@
 import base64
+import logging
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import JWTError, jwt
 from pydantic import BaseModel
 from app.config import settings
+
+
+logger = logging.getLogger(__name__)
 
 security = HTTPBearer()
 
@@ -66,7 +71,7 @@ async def get_current_user(
         )
 
     except JWTError as e:
-        print(f"JWT decode error: {e}")
+        logger.warning("JWT decode error: %s", e)
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail=f"Invalid or expired token: {str(e)}",
