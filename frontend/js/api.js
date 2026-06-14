@@ -27,16 +27,26 @@ async function request(path, options = {}) {
     headers.Authorization = `Bearer ${token}`;
   }
 
+  const controller = new AbortController();
+  const timeoutMs = options.timeoutMs ?? 15000;
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
   let response;
   try {
     response = await fetch(`${API_BASE_URL}${path}`, {
       ...options,
       headers,
+      signal: controller.signal,
     });
-  } catch {
+  } catch (err) {
+    if (err.name === "AbortError") {
+      throw new Error(`Zahtev je istekao (${path}). Proveri da li su servisi pokrenuti.`);
+    }
     throw new Error(
       "Nema veze sa API-jem. Pokreni: docker compose up --build, pa osveži stranicu (Ctrl+F5).",
     );
+  } finally {
+    clearTimeout(timeoutId);
   }
 
   if (response.status === 204) {

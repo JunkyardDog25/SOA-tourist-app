@@ -38,11 +38,20 @@ export function getUserFromToken() {
   if (!token) return null;
   const claims = parseJwt(token);
   if (!claims) return null;
+
+  let roles = claims.roles || [];
+  if (typeof roles === "string") {
+    roles = [roles];
+  }
+  if (!Array.isArray(roles)) {
+    roles = [];
+  }
+
   return {
     userId: claims.userId || claims.sub,
     username: claims.sub,
     email: claims.email,
-    roles: claims.roles || [],
+    roles,
   };
 }
 

@@ -38,7 +38,8 @@ async function loadPublished() {
   listEl.innerHTML = "<li class='loading'>Učitavanje...</li>";
 
   try {
-    const tours = await api.getPublishedTours();
+    const published = await api.getPublishedTours();
+    const tours = Array.isArray(published) ? published : [];
     if (!tours.length) {
       listEl.innerHTML = "<li class='empty'>Nema objavljenih tura.</li>";
       return;

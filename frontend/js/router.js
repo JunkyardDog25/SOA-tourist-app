@@ -19,29 +19,45 @@ export function registerPage(id, initFn) {
   pageInits[id] = initFn;
 }
 
-export function navigate(pageId) {
+function resolvePageId(pageId) {
   const item = NAV_ITEMS.find((n) => n.id === pageId);
   if (!item) {
-    pageId = hasToken() ? "browse" : "auth";
-  } else if (item.auth && !hasToken()) {
-    pageId = "auth";
-  } else if (item.role && !hasRole(item.role)) {
-    pageId = hasToken() ? "browse" : "auth";
+    return hasToken() ? "browse" : "auth";
   }
+  if (item.auth && !hasToken()) {
+    return "auth";
+  }
+  if (item.role && !hasRole(item.role)) {
+    return hasToken() ? "browse" : "auth";
+  }
+  return pageId;
+}
+
+function showPage(pageId) {
+  const resolved = resolvePageId(pageId);
 
   document.querySelectorAll(".page-section").forEach((el) => {
-    el.classList.toggle("hidden", el.dataset.page !== pageId);
+    el.classList.toggle("hidden", el.dataset.page !== resolved);
   });
 
   document.querySelectorAll(".nav-link").forEach((link) => {
-    link.classList.toggle("active", link.dataset.page === pageId);
+    link.classList.toggle("active", link.dataset.page === resolved);
   });
 
-  location.hash = pageId;
   updateUserBar();
 
-  const init = pageInits[pageId];
+  const init = pageInits[resolved];
   if (init) init();
+}
+
+export function navigate(pageId) {
+  const resolved = resolvePageId(pageId);
+  const current = location.hash.replace("#", "");
+
+  if (current !== resolved) {
+    location.hash = resolved;
+  }
+  showPage(resolved);
 }
 
 export function renderNav() {
@@ -89,9 +105,10 @@ function updateUserBar() {
 
 export function initRouter() {
   renderNav();
+
   window.addEventListener("hashchange", () => {
     const page = location.hash.replace("#", "") || (hasToken() ? "browse" : "auth");
-    navigate(page);
+    showPage(page);
   });
 
   const initial = location.hash.replace("#", "") || (hasToken() ? "browse" : "auth");
