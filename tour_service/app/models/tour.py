@@ -106,4 +106,5 @@ class TourPublicResponse(BaseModel):
     distance_km: float = 0.0
     durations: list[TourDuration] = Field(default_factory=list)
     first_keypoint: Optional[KeypointResponse] = None
+    keypoint_count: int = 0
     published_at: Optional[datetime] = None

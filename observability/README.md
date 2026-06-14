@@ -1,6 +1,6 @@
 # KT4 Observability dokumentacija
 
-Ovo je dokumentacija za observability deo projekta. Pisao sam je kao podsetnik za pokretanje i za odbranu KT4 zadatka. Ideja je da imamo tracing, agregaciju logova i monitoring metrika za mikroservisnu aplikaciju, a konkretna implementacija je najvise uradjena nad `tour-service`.
+Ovo je dokumentacija za observability deo projekta. Pisao sam je kao podsetnik za pokretanje i za odbranu KT4 zadatka. Ideja je da imamo tracing, agregaciju logova i monitoring metrika za mikroservisnu aplikaciju. Instrumentacija je uradjena na `tour-service` (Python/FastAPI) i `auth-service` (Spring Boot).
 
 ## Sta je implementirano
 
@@ -8,7 +8,7 @@ U projektu je dodat Grafana observability stack:
 
 - `Prometheus` skuplja metrike.
 - `Grafana` prikazuje metrike, logove i trace-ove.
-- `Tempo` cuva trace-ove iz `tour-service`.
+- `Tempo` cuva trace-ove iz `tour-service` i `auth-service`.
 - `Loki` cuva agregirane logove iz Docker kontejnera.
 - `Promtail` cita Docker logove i salje ih u Loki.
 - `cAdvisor` daje metrike Docker kontejnera.
@@ -19,8 +19,10 @@ Glavni tok je:
 
 ```text
 tour-service -> OpenTelemetry -> Tempo -> Grafana
+auth-service -> OpenTelemetry -> Tempo -> Grafana
 Docker logs -> Promtail -> Loki -> Grafana
 tour-service /metrics -> Prometheus -> Grafana
+auth-service /api/auth/actuator/prometheus -> Prometheus -> Grafana
 cAdvisor/node-exporter/windows_exporter -> Prometheus -> Grafana
 ```
 
@@ -39,6 +41,9 @@ Najbitniji fajlovi za observability su:
 - `tour_service/app/observability.py` - OpenTelemetry, logging i Prometheus setup za Tour servis.
 - `tour_service/app/main.py` - FastAPI aplikacija, `/metrics`, request logging i shutdown tracing-a.
 - `tour_service/requirements.txt` - dodate i pinovane observability biblioteke.
+- `auth_service/pom.xml` - `spring-boot-starter-opentelemetry` i `micrometer-registry-prometheus`.
+- `auth_service/src/main/resources/application.properties` - tracing, Prometheus actuator i log korelacija.
+- `auth_service/src/main/java/com/soa/authService/configuration/HttpRequestLoggingFilter.java` - HTTP request logovi.
 
 ## Portovi
 
@@ -145,6 +150,7 @@ Ocekivano je da budu `UP`:
 
 - `prometheus`
 - `tour-service`
+- `auth-service`
 - `cadvisor`
 - `node-exporter`
 
@@ -178,7 +184,21 @@ curl http://localhost:8084/health
 
 Posle nekoliko poziva, u Grafani treba da se vidi porast request rate-a za `tour-service`.
 
+Auth servis izbacuje Prometheus metrike na:
+
+```text
+http://auth-service:8080/api/auth/actuator/prometheus
+```
+
+Spring Boot koristi `http_server_requests_seconds_*` metrike. Za test kroz gateway:
+
+```bash
+curl -X POST http://localhost:8000/api/auth/login -H "Content-Type: application/json" -d "{\"email\":\"test@test.com\",\"password\":\"test\"}"
+```
+
 ## Tracing
+
+### Tour service
 
 Tracing je implementiran u `tour-service` pomocu OpenTelemetry biblioteka.
 
@@ -214,6 +234,31 @@ ready
 ```
 
 U Grafani se trace-ovi gledaju kroz datasource `Tempo`, ili preko dashboard panela `Tour Service Traces`.
+
+### Auth service
+
+Tracing je implementiran u `auth-service` pomocu `spring-boot-starter-opentelemetry`.
+
+Ukratko:
+
+- HTTP request-ovi prave span-ove preko Micrometer Observation API-ja.
+- Trace-ovi se salju u Tempo preko OTLP HTTP endpoint-a `http://tempo:4318/v1/traces`.
+- Logovi sadrze `otelTraceID` i `otelSpanID` iz MDC-a (`traceId` / `spanId`).
+
+Env promenljive u `docker-compose.yml` za Auth servis:
+
+```yaml
+OTEL_SERVICE_NAME: auth-service
+OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://tempo:4318/v1/traces
+```
+
+U Grafani se trace-ovi gledaju kroz panel `Auth Service Traces`, a logovi kroz `Auth Service Logs`.
+
+Loki upit za auth logove:
+
+```logql
+{service="auth-service"}
+```
 
 ## Logovi
 
@@ -476,9 +521,9 @@ To je dovoljno za odbranu i lokalni rad.
 
 Ovim je za KT4 pokriveno:
 
-- tracing u mikroservisnoj aplikaciji preko `tour-service`, OpenTelemetry-ja i Tempo-a;
+- tracing u mikroservisnoj aplikaciji preko `tour-service` i `auth-service`, OpenTelemetry-ja i Tempo-a;
 - agregacija logova preko Promtail-a, Loki-ja i Grafane;
-- aplikacione metrike preko Prometheus `/metrics` endpoint-a;
+- aplikacione metrike preko Prometheus endpoint-a (`/metrics` i `/actuator/prometheus`);
 - metrike kontejnera preko cAdvisor-a;
 - metrike Docker/WSL sloja preko node-exporter-a;
 - metrike prave Windows host masine preko windows_exporter-a.

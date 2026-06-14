@@ -16,6 +16,7 @@ from app.observability import (
 from app.routes.tour_routes import router as tour_router
 from app.routes.review_routes import router as review_router
 from app.routes.simulator_routes import router as simulator_router
+from app.routes.execution_routes import router as execution_router
 from app.routes.saga_routes import router as saga_router
 
 
@@ -76,6 +77,7 @@ async def log_http_request(request, call_next):
 app.include_router(tour_router, prefix="/api")
 app.include_router(review_router, prefix="/api")
 app.include_router(simulator_router, prefix="/api")
+app.include_router(execution_router, prefix="/api")
 app.include_router(saga_router, prefix="/api")
 
 

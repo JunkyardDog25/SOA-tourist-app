@@ -5,7 +5,7 @@ import grpc
 from fastapi import HTTPException
 
 from app.grpc.generated import tour_pb2, tour_pb2_grpc
-from app.services import tour_service, purchase_service
+from app.services import tour_service
 
 
 logger = logging.getLogger(__name__)
@@ -155,16 +155,11 @@ class TourQueryService(tour_pb2_grpc.TourQueryServiceServicer):
                     full_tour=_full_tour_to_proto(tour),
                 )
 
-            # Tourist: check if tour is purchased → reveal all keypoints
-            if "ROLE_TOURIST" in request.roles:
-                purchased = await purchase_service.has_purchased_tour(
-                    request.user_id, request.tour_id
+            if tour["status"] == "published":
+                return tour_pb2.TourDetailsResponse(
+                    public_view=False,
+                    full_tour=_full_tour_to_proto(tour),
                 )
-                if purchased:
-                    return tour_pb2.TourDetailsResponse(
-                        public_view=False,
-                        full_tour=_full_tour_to_proto(tour),
-                    )
 
             public_tour = tour_service.get_public_tour_response(tour)
             return tour_pb2.TourDetailsResponse(

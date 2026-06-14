@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Ture na mapi</title>
+    <title>SOA Tourist App</title>
     <link
       rel="stylesheet"
       href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -14,153 +14,421 @@
   </head>
   <body>
     <header class="app-header">
-      <h1>Ture na mapi</h1>
-      <p class="subtitle">Crtanje ture preko ključnih tačaka (GUIDE nalog)</p>
+      <div class="header-row">
+        <div>
+          <h1>SOA Tourist App</h1>
+        </div>
+        <div id="user-bar" class="user-bar"></div>
+      </div>
+      <nav id="main-nav" class="main-nav"></nav>
     </header>
 
     <main class="app-main">
-      <section id="view-auth" class="panel">
-        <h2>Prijava</h2>
-        <p>Unesi JWT token sa auth servisa (nalog sa ulogom <strong>GUIDE</strong>).</p>
-        <label class="field">
-          <span>Bearer token</span>
-          <textarea id="token-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIs..."></textarea>
-        </label>
-        <p id="auth-error" class="error"></p>
-        <button type="button" id="btn-save-token" class="btn primary">Nastavi</button>
-        <button type="button" id="btn-public-tours-auth" class="btn ghost">
-          Pregled objavljenih tura
-        </button>
-        <p class="meta" style="margin-top: 1rem">
-          <a href="simulator.html">Simulator lokacije (turista) →</a>
-        </p>
-      </section>
+      <section class="page-section panel" data-page="auth">
+        <h2>Prijava i registracija</h2>
 
-      <section id="view-list" class="panel hidden">
-        <div class="panel-head">
-          <h2>Moje ture</h2>
-          <div class="actions">
-            <button type="button" id="btn-new-tour" class="btn primary">Nova tura</button>
-            <button type="button" id="btn-public-tours-list" class="btn ghost">
-              Objavljene ture
-            </button>
-            <button type="button" id="btn-logout" class="btn ghost">Odjava</button>
+        <div class="grid-2">
+          <div>
+            <h3>Prijava</h3>
+            <form id="login-form">
+              <label class="field">
+                <span>Email</span>
+                <input id="login-email" type="email" required />
+              </label>
+              <label class="field">
+                <span>Lozinka</span>
+                <input id="login-password" type="password" required />
+              </label>
+              <p id="login-error" class="error"></p>
+              <button type="submit" class="btn primary">Prijavi se</button>
+            </form>
+          </div>
+
+          <div>
+            <h3>Registracija</h3>
+            <form id="register-form">
+              <label class="field">
+                <span>Korisničko ime</span>
+                <input id="reg-username" type="text" required />
+              </label>
+              <label class="field">
+                <span>Email</span>
+                <input id="reg-email" type="email" required />
+              </label>
+              <label class="field">
+                <span>Lozinka (min 6)</span>
+                <input id="reg-password" type="password" minlength="6" required />
+              </label>
+              <label class="field">
+                <span>Uloga</span>
+                <select id="reg-role">
+                  <option value="TOURIST">TOURIST</option>
+                  <option value="GUIDE">GUIDE</option>
+                </select>
+              </label>
+              <p id="register-error" class="error"></p>
+              <button type="submit" class="btn primary">Registruj se</button>
+            </form>
           </div>
         </div>
-        <p id="list-error" class="error"></p>
-        <ul id="tours-list" class="tours-list"></ul>
+
+        <details class="manual-token">
+          <summary>Ručna prijava</summary>
+          <form id="token-form">
+            <label class="field">
+              <span>Token</span>
+              <textarea id="manual-token" rows="3"></textarea>
+            </label>
+            <p id="token-error" class="error"></p>
+            <button type="submit" class="btn ghost">Koristi token</button>
+          </form>
+        </details>
       </section>
 
-      <section id="view-public" class="panel hidden">
-        <div class="panel-head">
-          <div>
+      <section class="page-section panel hidden" data-page="profile">
+        <h2>Profil</h2>
+        <div id="profile-output" class="info-box"></div>
+        <form id="profile-form" class="grid-2">
+          <label class="field">
+            <span>Ime</span>
+            <input id="profile-first" type="text" />
+          </label>
+          <label class="field">
+            <span>Prezime</span>
+            <input id="profile-last" type="text" />
+          </label>
+          <label class="field">
+            <span>URL slike profila</span>
+            <input id="profile-image" type="text" />
+          </label>
+          <label class="field full-width">
+            <span>Biografija</span>
+            <textarea id="profile-bio" rows="3"></textarea>
+          </label>
+          <p id="profile-error" class="error full-width"></p>
+          <div class="full-width">
+            <button type="submit" class="btn primary">Sačuvaj profil</button>
+            <button type="button" id="btn-reload-profile" class="btn ghost">Osveži</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="page-section panel hidden" data-page="browse">
+        <div id="browse-list-wrap">
+          <div class="panel-head">
             <h2>Objavljene ture</h2>
-            <p class="meta">Turistički prikaz sadrži samo osnovne podatke i prvu ključnu tačku.</p>
+            <button type="button" id="btn-reload-published" class="btn ghost">Osveži</button>
           </div>
-          <div class="actions">
-            <button type="button" id="btn-back-auth" class="btn ghost">Nazad</button>
+          <p id="browse-error" class="error"></p>
+          <ul id="published-list" class="item-list"></ul>
+        </div>
+
+        <div id="browse-detail" class="hidden">
+          <div class="panel-head">
+            <button type="button" id="btn-back-browse" class="btn ghost">← Nazad</button>
+            <h2 id="browse-detail-title"></h2>
+          </div>
+          <div id="browse-detail-body"></div>
+          <p id="tour-rating" class="meta"></p>
+          <div class="row-actions">
+            <button type="button" id="btn-add-to-cart" class="btn primary">Dodaj u korpu</button>
+            <button type="button" id="btn-check-purchased" class="btn ghost">Proveri kupovinu</button>
+            <span id="purchased-status"></span>
+          </div>
+
+          <h3>Recenzije</h3>
+          <ul id="reviews-list" class="item-list"></ul>
+
+          <div id="review-section">
+            <h4>Nova recenzija</h4>
+            <form id="review-form">
+              <input id="review-tour-id" type="hidden" />
+              <label class="field">
+                <span>Ocena (1-5)</span>
+                <input id="review-rating" type="number" min="1" max="5" required />
+              </label>
+              <label class="field">
+                <span>Komentar</span>
+                <textarea id="review-comment" rows="2" required></textarea>
+              </label>
+              <label class="field">
+                <span>Datum posete (YYYY-MM-DD)</span>
+                <input id="review-visit-date" type="date" required />
+              </label>
+              <label class="field">
+                <span>URL slika (zarezom)</span>
+                <input id="review-images" type="text" />
+              </label>
+              <p id="review-error" class="error"></p>
+              <button type="submit" class="btn primary">Pošalji recenziju</button>
+            </form>
           </div>
         </div>
-        <p id="public-error" class="error"></p>
-        <ul id="public-tours-list" class="tours-list"></ul>
       </section>
 
-      <section id="view-editor" class="panel hidden editor-layout">
-        <div class="panel-head">
-          <div>
-            <button type="button" id="btn-back-list" class="btn ghost">← Nazad</button>
-            <h2 id="editor-title">Tura</h2>
-            <p id="editor-status" class="meta"></p>
+      <section class="page-section panel hidden" data-page="cart">
+        <h2>Korpa</h2>
+        <div class="row-actions">
+          <button type="button" id="btn-create-cart" class="btn ghost">Kreiraj korpu</button>
+          <button type="button" id="btn-reload-cart" class="btn ghost">Osveži korpu</button>
+          <button type="button" id="btn-checkout" class="btn primary">Kupi</button>
+        </div>
+        <p id="cart-error" class="error"></p>
+        <p>Ukupno: <strong id="cart-total">—</strong></p>
+        <ul id="cart-items" class="item-list"></ul>
+        <div id="checkout-result"></div>
+
+        <h3>Kupljene ture</h3>
+        <button type="button" id="btn-reload-tokens" class="btn ghost">Osveži listu</button>
+        <p id="tokens-error" class="error"></p>
+        <ul id="tokens-list" class="item-list"></ul>
+      </section>
+
+      <section class="page-section panel hidden" data-page="guide">
+        <div id="guide-list-view">
+          <div class="panel-head">
+            <h2>Moje ture</h2>
+            <button type="button" id="btn-new-tour" class="btn primary">Nova tura</button>
           </div>
-          <div class="actions lifecycle-actions">
-            <button type="button" id="btn-publish-tour" class="btn primary">Objavi</button>
-            <button type="button" id="btn-archive-tour" class="btn danger">Arhiviraj</button>
-            <button type="button" id="btn-reactivate-tour" class="btn primary">Reaktiviraj</button>
-          </div>
+          <p id="guide-list-error" class="error"></p>
+          <ul id="guide-tours-list" class="item-list"></ul>
         </div>
 
-        <div class="editor-grid">
-          <aside class="sidebar">
-            <section class="tour-details">
-              <h3>Podaci ture</h3>
-              <p id="tour-distance" class="meta"></p>
-              <p id="tour-timestamps" class="meta"></p>
+        <div id="guide-editor-view" class="hidden editor-layout">
+          <div class="panel-head">
+            <div>
+              <button type="button" id="btn-back-guide-list" class="btn ghost">← Nazad</button>
+              <h2 id="editor-title">Tura</h2>
+              <p id="editor-status" class="meta"></p>
+            </div>
+            <div class="actions">
+              <button type="button" id="btn-publish-tour" class="btn primary">Objavi</button>
+              <button type="button" id="btn-archive-tour" class="btn danger">Arhiviraj</button>
+              <button type="button" id="btn-reactivate-tour" class="btn primary">Reaktiviraj</button>
+              <button type="button" id="btn-delete-tour" class="btn danger">Obriši turu</button>
+            </div>
+          </div>
+
+          <div class="editor-grid">
+            <aside class="sidebar">
+              <form id="tour-info-form" class="tour-details">
+                <h3>Podaci ture</h3>
+                <label class="field">
+                  <span>Naziv</span>
+                  <input id="tour-title-input" type="text" required />
+                </label>
+                <label class="field">
+                  <span>Opis</span>
+                  <textarea id="tour-desc-input" rows="2"></textarea>
+                </label>
+                <label class="field">
+                  <span>Težina</span>
+                  <select id="tour-diff-input">
+                    <option value="easy">easy</option>
+                    <option value="medium">medium</option>
+                    <option value="hard">hard</option>
+                  </select>
+                </label>
+                <label class="field">
+                  <span>Cena (RSD)</span>
+                  <input id="tour-price-input" type="number" min="0" step="1" />
+                </label>
+                <label class="field">
+                  <span>Tagovi (zarezom)</span>
+                  <input id="tour-tags-input" type="text" />
+                </label>
+                <p id="tour-info-error" class="error"></p>
+                <button type="submit" class="btn primary">Sačuvaj podatke</button>
+              </form>
+
               <form id="duration-form" class="duration-form">
                 <h4>Vreme obilaska</h4>
                 <label class="field">
                   <span>Peške (min)</span>
-                  <input id="duration-walking" type="number" min="1" step="1" />
+                  <input id="duration-walking" type="number" min="1" />
                 </label>
                 <label class="field">
                   <span>Biciklom (min)</span>
-                  <input id="duration-bicycle" type="number" min="1" step="1" />
+                  <input id="duration-bicycle" type="number" min="1" />
                 </label>
                 <label class="field">
                   <span>Automobilom (min)</span>
-                  <input id="duration-car" type="number" min="1" step="1" />
+                  <input id="duration-car" type="number" min="1" />
                 </label>
                 <p id="duration-error" class="error"></p>
                 <button type="submit" class="btn primary">Sačuvaj vremena</button>
               </form>
               <p id="lifecycle-error" class="error"></p>
-            </section>
 
-            <h3>Ključne tačke</h3>
-            <div class="sidebar-actions">
-              <button type="button" id="btn-add-keypoint" class="btn primary">
-                Dodaj tačku (klik na mapu)
-              </button>
-              <button type="button" id="btn-move-keypoint" class="btn">
-                Promeni poziciju
-              </button>
-              <button type="button" id="btn-cancel-map" class="btn ghost">
-                Otkaži izbor na mapi
-              </button>
+              <h3>Ključne tačke</h3>
+              <div class="sidebar-actions">
+                <button type="button" id="btn-add-keypoint" class="btn primary">Dodaj (klik na mapu)</button>
+                <button type="button" id="btn-move-keypoint" class="btn">Promeni poziciju</button>
+                <button type="button" id="btn-cancel-map" class="btn ghost">Otkaži</button>
+              </div>
+              <ul id="keypoints-list" class="keypoints-list"></ul>
+
+              <form id="keypoint-form" class="keypoint-form hidden">
+                <h3 id="form-title">Ključna tačka</h3>
+                <label class="field">
+                  <span>Naziv</span>
+                  <input id="kp-name" type="text" required />
+                </label>
+                <label class="field">
+                  <span>Opis</span>
+                  <textarea id="kp-description" rows="2" required></textarea>
+                </label>
+                <label class="field">
+                  <span>URL slike</span>
+                  <input id="kp-image-url" type="text" />
+                </label>
+                <div class="coords-row">
+                  <label class="field">
+                    <span>Lat</span>
+                    <input id="kp-latitude" type="number" step="any" required />
+                  </label>
+                  <label class="field">
+                    <span>Lng</span>
+                    <input id="kp-longitude" type="number" step="any" required />
+                  </label>
+                </div>
+                <p id="form-error" class="error"></p>
+                <div class="form-actions">
+                  <button type="submit" class="btn primary">Sačuvaj</button>
+                  <button type="button" id="btn-delete-keypoint" class="btn danger">Obriši</button>
+                </div>
+              </form>
+            </aside>
+            <div class="map-wrap">
+              <p id="map-hint" class="map-hint map-hint-info"></p>
+              <div id="tour-map"></div>
             </div>
-            <ul id="keypoints-list" class="keypoints-list"></ul>
-
-            <form id="keypoint-form" class="keypoint-form hidden">
-              <h3 id="form-title">Ključna tačka</h3>
-              <p class="form-note">
-                Koordinate dolaze iz klika na mapu; možeš ih ručno precizirati.
-              </p>
-              <label class="field">
-                <span>Naziv</span>
-                <input id="kp-name" type="text" required maxlength="200" />
-              </label>
-              <label class="field">
-                <span>Opis</span>
-                <textarea id="kp-description" rows="3" required maxlength="2000"></textarea>
-              </label>
-              <label class="field">
-                <span>URL slike (opciono)</span>
-                <input id="kp-image-url" type="text" placeholder="https://..." />
-              </label>
-              <div class="coords-row">
-                <label class="field">
-                  <span>Širina (lat)</span>
-                  <input id="kp-latitude" type="number" step="any" required />
-                </label>
-                <label class="field">
-                  <span>Dužina (lng)</span>
-                  <input id="kp-longitude" type="number" step="any" required />
-                </label>
-              </div>
-              <p id="form-error" class="error"></p>
-              <div class="form-actions">
-                <button type="submit" id="btn-save-keypoint" class="btn primary">Sačuvaj</button>
-                <button type="button" id="btn-delete-keypoint" class="btn danger">
-                  Obriši tačku
-                </button>
-              </div>
-            </form>
-          </aside>
-
-          <div class="map-wrap">
-            <p id="map-hint" class="map-hint map-hint-info"></p>
-            <div id="tour-map"></div>
           </div>
         </div>
+      </section>
+
+      <section class="page-section panel hidden" data-page="blog">
+        <div id="blog-list-wrap">
+          <div class="panel-head">
+            <h2>Blog</h2>
+            <button type="button" id="btn-reload-blogs" class="btn ghost">Osveži</button>
+          </div>
+          <p id="blog-error" class="error"></p>
+          <ul id="blogs-list" class="item-list"></ul>
+
+          <h3>Novi blog</h3>
+          <form id="blog-create-form" class="grid-2">
+            <label class="field">
+              <span>Naslov</span>
+              <input id="blog-title" type="text" required />
+            </label>
+            <label class="field">
+              <span>URL slika (zarezom)</span>
+              <input id="blog-images" type="text" />
+            </label>
+            <label class="field full-width">
+              <span>Opis</span>
+              <textarea id="blog-desc" rows="3" required></textarea>
+            </label>
+            <p id="blog-create-error" class="error full-width"></p>
+            <button type="submit" class="btn primary">Objavi blog</button>
+          </form>
+        </div>
+
+        <div id="blog-detail" class="hidden">
+          <button type="button" id="btn-back-blogs" class="btn ghost">← Nazad</button>
+          <h2 id="blog-detail-title"></h2>
+          <div id="blog-detail-body"></div>
+          <div class="row-actions">
+            <button type="button" id="btn-like-blog" class="btn primary">Lajkuj</button>
+            <button type="button" id="btn-unlike-blog" class="btn ghost">Ukloni lajk</button>
+          </div>
+          <h3>Komentari</h3>
+          <ul id="blog-comments" class="item-list"></ul>
+          <form id="comment-form">
+            <label class="field">
+              <span>Novi komentar</span>
+              <textarea id="comment-text" rows="2" required></textarea>
+            </label>
+            <p id="comment-error" class="error"></p>
+            <button type="submit" class="btn primary">Dodaj komentar</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="page-section panel hidden" data-page="followers">
+        <h2>Pratioci</h2>
+
+        <form id="follow-form" class="inline-form">
+          <label class="field">
+            <span>ID korisnika za praćenje</span>
+            <input id="followee-id" type="text" required />
+          </label>
+          <button type="submit" class="btn primary">Prati</button>
+        </form>
+        <p id="follow-error" class="error"></p>
+
+        <div class="grid-2">
+          <div>
+            <h3>Pratim</h3>
+            <button type="button" id="btn-load-following" class="btn ghost btn-sm">Osveži</button>
+            <p id="following-error" class="error"></p>
+            <ul id="following-list" class="item-list"></ul>
+          </div>
+          <div>
+            <h3>Preporuke</h3>
+            <button type="button" id="btn-load-recommendations" class="btn ghost btn-sm">Osveži</button>
+            <p id="recommendations-error" class="error"></p>
+            <ul id="recommendations-list" class="item-list"></ul>
+          </div>
+        </div>
+
+        <h3>Pratioci korisnika</h3>
+        <div class="inline-form">
+          <label class="field">
+            <span>ID korisnika (prazno = moj ID)</span>
+            <input id="followers-user-id" type="text" />
+          </label>
+          <button type="button" id="btn-load-followers" class="btn ghost">Učitaj pratioce</button>
+        </div>
+        <p id="followers-error" class="error"></p>
+        <ul id="followers-list" class="item-list"></ul>
+      </section>
+
+      <section class="page-section panel hidden" data-page="simulator">
+        <div class="panel-head">
+          <h2>Simulator</h2>
+          <button type="button" id="btn-reload-location" class="btn ghost">Osveži</button>
+        </div>
+
+        <label class="field">
+          <span>Tura za obilazak</span>
+          <select id="sim-tour-select">
+            <option value="">Učitavanje tura...</option>
+          </select>
+        </label>
+        <p id="sim-tour-status" class="meta"></p>
+
+        <div class="simulator-info">
+          <p id="sim-status">Izaberi turu i klikni na mapu da postaviš lokaciju.</p>
+          <p><strong>Koordinate:</strong> <span id="sim-coords">—</span></p>
+          <p id="sim-nearest" class="meta"></p>
+          <div id="sim-progress" class="simulator-info hidden">
+            <p><strong>Napredak:</strong> <span id="sim-progress-text">—</span></p>
+            <ul id="sim-visits-list" class="simple-list"></ul>
+          </div>
+        </div>
+        <p id="sim-error" class="error"></p>
+        <div id="simulator-map"></div>
+      </section>
+
+      <section class="page-section panel hidden" data-page="admin">
+        <div class="panel-head">
+          <h2>Admin</h2>
+          <button type="button" id="btn-reload-users" class="btn ghost">Osveži</button>
+        </div>
+        <p id="admin-error" class="error"></p>
+        <ul id="admin-users-list" class="item-list"></ul>
       </section>
     </main>
 
@@ -169,6 +437,7 @@
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script type="module" src="./js/app.js"></script>
+    <script src="./js/simulator-tours.js?v=2"></script>
+    <script type="module" src="./js/main.js?v=5"></script>
   </body>
 </html>

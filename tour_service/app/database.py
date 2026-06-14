@@ -32,6 +32,15 @@ async def connect_to_mongo():
         name="uniq_tourist_location",
     )
     await db.purchase_records.create_index("saga_id", name="idx_purchase_records_saga_id")
+    await db.keypoint_visits.create_index(
+        [("tourist_id", 1), ("tour_id", 1), ("keypoint_id", 1)],
+        unique=True,
+        name="uniq_keypoint_visit",
+    )
+    await db.keypoint_visits.create_index(
+        [("tourist_id", 1), ("tour_id", 1)],
+        name="idx_visits_by_tour",
+    )
 
     logger.info("Connected to MongoDB: %s", settings.MONGO_DB)
 
