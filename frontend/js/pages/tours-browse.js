@@ -53,7 +53,7 @@ async function loadPublished() {
           <strong>${escapeHtml(t.title)}</strong>
           <p class="meta">${escapeHtml(t.description)}</p>
           <span class="badge">${t.status}</span>
-          <span class="meta">${formatDistance(t.distance_km)} · ${Number(t.price || 0).toFixed(2)} RSD</span>
+          <span class="meta">${formatDistance(t.distance_km)} · ${Number(t.price || 0).toFixed(2)} RSD · ${t.keypoint_count ?? (t.first_keypoint ? 1 : 0)} tačaka</span>
         </div>
       </li>`,
       )
@@ -80,16 +80,16 @@ async function openTour(tourId) {
     document.getElementById("browse-detail-title").textContent = tour.title;
 
     const keypoints = tour.keypoints || (tour.first_keypoint ? [tour.first_keypoint] : []);
-    const hasFullRoute = Boolean(tour.keypoints?.length);
+    const hasFullRoute = keypoints.length > 1 || Boolean(tour.keypoints?.length);
 
     document.getElementById("browse-detail-body").innerHTML = `
       <p>${escapeHtml(tour.description)}</p>
       <p class="meta">Težina: ${escapeHtml(tour.difficulty)} · ${formatDistance(tour.distance_km)} · ${formatDurations(tour.durations)}</p>
       <p class="meta">Cena: <strong>${Number(tour.price || 0).toFixed(2)} RSD</strong></p>
       <p class="meta">Tagovi: ${(tour.tags || []).map(escapeHtml).join(", ") || "—"}</p>
-      <h4>Mapa obilaska</h4>
+      <h4>Mapa ture</h4>
       <p class="meta" id="browse-map-hint">
-        ${hasFullRoute ? "Prikaz svih ključnih tačaka (tura kupljena)." : "Samo prva tačka — kupi turu za punu rutu."}
+        ${keypoints.length} ključnih tačaka. Kupi turu za obilazak u simulatoru.
       </p>
       <div id="browse-execution-map"></div>
       <p id="browse-nearest" class="meta"></p>

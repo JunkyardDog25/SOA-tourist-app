@@ -74,6 +74,7 @@ def _tour_to_public_response(tour: dict) -> dict:
         "distance_km": response["distance_km"],
         "durations": response["durations"],
         "first_keypoint": keypoints[0] if keypoints else None,
+        "keypoint_count": len(keypoints),
         "published_at": response["published_at"],
     }
 

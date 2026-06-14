@@ -4,7 +4,7 @@ from app.models.tour import (
     TourCreate, TourUpdate, TourResponse, TourPublicResponse, TourDurationsUpdate,
     KeypointCreate, KeypointUpdate, KeypointResponse,
 )
-from app.services import tour_service, purchase_service
+from app.services import tour_service
 
 router = APIRouter(prefix="/tours", tags=["Tours"])
 
@@ -57,11 +57,10 @@ async def get_tour(
     if is_owner_or_admin:
         return tour
 
-    # Tourist: check if purchased → reveal all keypoints
-    if "ROLE_TOURIST" in current_user.roles:
-        purchased = await purchase_service.has_purchased_tour(current_user.user_id, tour_id)
-        if purchased:
-            return tour
+    # Objavljena tura — turista vidi sve ključne tačke pri pregledu (kupovina
+    # je potrebna za simulator/obilazak i recenzije).
+    if tour["status"] == "published":
+        return tour
 
     return tour_service.get_public_tour_response(tour)
 
