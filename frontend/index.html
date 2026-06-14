@@ -431,7 +431,9 @@
         <p class="meta">
           Plave tačke = ključne tačke ture, zelena = tvoja lokacija. Kupljene ture prikazuju celu rutu.
         </p>
-        <p class="meta endpoint-hint">GET/PUT /api/simulator/location · GET /api/tours/{id}</p>
+        <p class="meta endpoint-hint">
+          GET/PUT /api/simulator/location · POST /api/execution/{tourId}/check-position
+        </p>
 
         <label class="field">
           <span>Tura za obilazak</span>
@@ -445,6 +447,10 @@
           <p id="sim-status">Izaberi turu i klikni na mapu da postaviš lokaciju.</p>
           <p><strong>Koordinate:</strong> <span id="sim-coords">—</span></p>
           <p id="sim-nearest" class="meta"></p>
+        <div id="sim-progress" class="simulator-info hidden">
+          <p><strong>Napredak obilaska:</strong> <span id="sim-progress-text">—</span></p>
+          <ul id="sim-visits-list" class="simple-list"></ul>
+        </div>
         </div>
         <p id="sim-error" class="error"></p>
         <div id="simulator-map"></div>

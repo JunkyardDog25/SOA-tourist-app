@@ -105,6 +105,7 @@ func main() {
 	proxy.MountProxy(r, "/api/tours", tourProxy)
 	proxy.MountProxy(r, "/api/reviews", tourProxy)
 	proxy.MountProxy(r, "/api/simulator", tourProxy)
+	proxy.MountProxy(r, "/api/execution", tourProxy)
 	proxy.MountProxy(r, "/api/purchases", purchaseProxy)
 
 	log.Printf("API Gateway running on :%s", cfg.Port)

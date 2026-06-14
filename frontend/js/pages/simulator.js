@@ -1,12 +1,15 @@
 import { api, hasToken } from "../api.js";
 import { ExecutionMap, nearestKeypoint } from "../execution-map.js";
-import { escapeHtml, showError } from "../utils.js";
+import { escapeHtml, formatDateTime, showError } from "../utils.js";
 
 let eventsBound = false;
 let executionMap = null;
 let saving = false;
 let selectedTourId = null;
 let currentKeypoints = [];
+let visitedKeypointIds = new Set();
+
+const VISIT_RADIUS_M = 80;
 
 export function initSimulatorPage() {
   bindEvents();
@@ -30,6 +33,9 @@ function bindEvents() {
       loadTourOptions();
     }
     loadLocation();
+    if (selectedTourId) {
+      loadExecutionProgress(selectedTourId);
+    }
   });
   document.getElementById("sim-tour-select")?.addEventListener("change", onTourSelected);
 }
@@ -76,6 +82,12 @@ function ensureMap() {
   }
 }
 
+function renderKeypointsOnMap() {
+  if (executionMap) {
+    executionMap.renderKeypoints(currentKeypoints, visitedKeypointIds);
+  }
+}
+
 function updateNearestInfo(latitude, longitude) {
   const infoEl = document.getElementById("sim-nearest");
   if (!infoEl) return;
@@ -93,7 +105,88 @@ function updateNearestInfo(latitude, longitude) {
     infoEl.textContent = "";
     return;
   }
-  infoEl.innerHTML = `Najbliža tačka: <strong>${escapeHtml(nearest.keypoint.name)}</strong> (${nearest.distanceKm.toFixed(2)} km)`;
+
+  const distM = nearest.distanceKm * 1000;
+  const nearText =
+    distM <= VISIT_RADIUS_M
+      ? " — <strong>u dometu za automatsko beleženje!</strong>"
+      : "";
+  infoEl.innerHTML =
+    `Najbliža tačka: <strong>${escapeHtml(nearest.keypoint.name)}</strong> (${distM.toFixed(0)} m)${nearText}`;
+}
+
+function renderProgressUI(progress) {
+  const wrap = document.getElementById("sim-progress");
+  const textEl = document.getElementById("sim-progress-text");
+  const listEl = document.getElementById("sim-visits-list");
+  if (!wrap || !textEl || !listEl) return;
+
+  if (!selectedTourId || !progress) {
+    wrap.classList.add("hidden");
+    return;
+  }
+
+  wrap.classList.remove("hidden");
+  textEl.textContent = `${progress.visited_count} / ${progress.total_keypoints} tačaka`;
+  if (progress.completed) {
+    textEl.textContent += " — tura završena!";
+  }
+
+  if (!progress.visits?.length) {
+    listEl.innerHTML =
+      "<li class='meta'>Nijedna tačka još nije obišena. Priđi unutar 80m ili klikni blizu tačke na mapi.</li>";
+    return;
+  }
+
+  listEl.innerHTML = progress.visits
+    .map(
+      (v) =>
+        `<li>✓ <strong>${escapeHtml(v.keypoint_name)}</strong> — ${formatDateTime(v.visited_at)}</li>`,
+    )
+    .join("");
+}
+
+async function loadExecutionProgress(tourId) {
+  if (!tourId) return null;
+  try {
+    const progress = await api.getExecutionProgress(tourId);
+    visitedKeypointIds = new Set((progress.visits || []).map((v) => v.keypoint_id));
+    renderKeypointsOnMap();
+    renderProgressUI(progress);
+    return progress;
+  } catch (err) {
+    document.getElementById("sim-progress")?.classList.add("hidden");
+    return null;
+  }
+}
+
+async function checkExecutionAtPosition(latitude, longitude) {
+  if (!selectedTourId || latitude == null || longitude == null) return;
+
+  try {
+    const progress = await api.checkExecutionPosition(selectedTourId, {
+      latitude,
+      longitude,
+    });
+    visitedKeypointIds = new Set((progress.visits || []).map((v) => v.keypoint_id));
+    renderKeypointsOnMap();
+    renderProgressUI(progress);
+
+    if (progress.newly_visited?.length) {
+      const statusEl = document.getElementById("sim-status");
+      if (statusEl) {
+        statusEl.textContent = `Nova tačka obišena! (${progress.visited_count}/${progress.total_keypoints})`;
+      }
+    }
+    if (progress.completed) {
+      const statusEl = document.getElementById("sim-status");
+      if (statusEl) {
+        statusEl.textContent = "Čestitamo — obišao si celu turu!";
+      }
+    }
+  } catch (err) {
+    showError(document.getElementById("sim-error"), err.message);
+  }
 }
 
 async function loadTourOptions() {
@@ -134,9 +227,7 @@ async function loadTourOptions() {
           select.value = selectedTourId;
         }
       })
-      .catch(() => {
-        /* zadrži listu bez oznaka kupovine */
-      });
+      .catch(() => {});
   } catch (err) {
     select.innerHTML = '<option value="">Greška pri učitavanju</option>';
     setTourStatus(err.message, true);
@@ -154,7 +245,9 @@ async function onTourSelected() {
 
   if (!selectedTourId) {
     currentKeypoints = [];
+    visitedKeypointIds = new Set();
     executionMap.clearKeypoints();
+    document.getElementById("sim-progress")?.classList.add("hidden");
     updateNearestInfo(null, null);
     return;
   }
@@ -162,21 +255,26 @@ async function onTourSelected() {
   try {
     const tour = await api.getTour(selectedTourId);
     currentKeypoints = tour.keypoints || (tour.first_keypoint ? [tour.first_keypoint] : []);
-    executionMap.renderKeypoints(currentKeypoints);
 
     const statusEl = document.getElementById("sim-status");
     if (tour.keypoints?.length) {
-      statusEl.textContent = "Puna ruta (kupljeno). Klikni na mapu za lokaciju.";
+      statusEl.textContent =
+        "Klikni blizu tačke na mapi (unutar 80m) da se automatski zabeleži obilazak.";
     } else if (tour.first_keypoint) {
-      statusEl.textContent = "Samo prva tačka — kupi turu za celu rutu.";
+      statusEl.textContent = "Samo prva tačka — kupi turu za celu rutu i evidenciju.";
     } else {
       statusEl.textContent = "Tura nema ključnih tačaka.";
     }
+
+    await loadExecutionProgress(selectedTourId);
 
     const loc = await api.getTouristLocation();
     if (loc?.latitude != null) {
       executionMap.showTourist(loc.latitude, loc.longitude);
       updateNearestInfo(loc.latitude, loc.longitude);
+      await checkExecutionAtPosition(loc.latitude, loc.longitude);
+    } else {
+      renderKeypointsOnMap();
     }
   } catch (err) {
     showError(errEl, err.message);
@@ -199,13 +297,16 @@ async function loadLocation() {
     if (loc?.latitude != null && loc?.longitude != null) {
       executionMap.showTourist(loc.latitude, loc.longitude);
       statusEl.textContent = selectedTourId
-        ? "Lokacija učitana. Klikni na mapu da je promeniš."
+        ? "Lokacija učitana. Klikni blizu tačke da je obiđeš."
         : "Lokacija učitana. Izaberi turu iz padajućeg menija.";
       coordsEl.textContent = formatCoords(loc.latitude, loc.longitude);
       if (loc.updated_at) {
         coordsEl.textContent += ` (ažurirano: ${new Date(loc.updated_at).toLocaleString()})`;
       }
       updateNearestInfo(loc.latitude, loc.longitude);
+      if (selectedTourId) {
+        await checkExecutionAtPosition(loc.latitude, loc.longitude);
+      }
     } else {
       executionMap.clearTourist();
       statusEl.textContent = "Klikni na mapu da postaviš lokaciju.";
@@ -239,12 +340,18 @@ async function saveLocation(coords) {
     const loc = await api.setTouristLocation({ latitude, longitude });
     ensureMap();
     executionMap?.showTourist(loc.latitude, loc.longitude);
-    statusEl.textContent = "Lokacija sačuvana.";
     coordsEl.textContent = formatCoords(loc.latitude, loc.longitude);
     if (loc.updated_at) {
       coordsEl.textContent += ` (ažurirano: ${new Date(loc.updated_at).toLocaleString()})`;
     }
     updateNearestInfo(loc.latitude, loc.longitude);
+
+    if (selectedTourId) {
+      await checkExecutionAtPosition(latitude, longitude);
+      statusEl.textContent = "Lokacija sačuvana. Proverena blizina tačaka ture.";
+    } else {
+      statusEl.textContent = "Lokacija sačuvana. Izaberi turu za evidenciju obilaska.";
+    }
   } catch (err) {
     statusEl.textContent = "Greška pri čuvanju.";
     showError(errEl, err.message);

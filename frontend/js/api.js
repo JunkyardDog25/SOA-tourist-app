@@ -178,6 +178,16 @@ export const api = {
       body: JSON.stringify(body),
     }),
 
+  // Tour execution (evidencija obilaska)
+  getExecutionProgress: (tourId) => request(`/execution/${tourId}/progress`),
+  checkExecutionPosition: (tourId, body) =>
+    request(`/execution/${tourId}/check-position`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  markKeypointVisited: (tourId, keypointId) =>
+    request(`/execution/${tourId}/keypoints/${keypointId}/visit`, { method: "POST" }),
+
   // Purchase
   createCart: () => request("/purchases/cart", { method: "POST" }),
   getCart: () => request("/purchases/cart"),

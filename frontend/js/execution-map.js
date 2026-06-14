@@ -40,8 +40,9 @@ export class ExecutionMap {
     });
   }
 
-  renderKeypoints(keypoints = []) {
+  renderKeypoints(keypoints = [], visitedIds = new Set()) {
     this.keypoints = keypoints;
+    this.visitedIds = visitedIds;
     this.markersLayer.clearLayers();
     if (this.routeLine) {
       this.map.removeLayer(this.routeLine);
@@ -53,18 +54,19 @@ export class ExecutionMap {
     keypoints.forEach((kp, index) => {
       const latlng = [kp.latitude, kp.longitude];
       latlngs.push(latlng);
+      const visited = visitedIds.has(kp.id);
 
       const marker = L.marker(latlng, {
         icon: L.divIcon({
-          className: "keypoint-marker",
-          html: `<span>${index + 1}</span>`,
+          className: visited ? "keypoint-marker visited" : "keypoint-marker",
+          html: `<span>${visited ? "✓" : index + 1}</span>`,
           iconSize: [28, 28],
           iconAnchor: [14, 14],
         }),
       });
 
       marker.bindPopup(
-        `<strong>${escapeHtml(kp.name)}</strong><br>${escapeHtml(kp.description || "")}`,
+        `<strong>${escapeHtml(kp.name)}</strong><br>${escapeHtml(kp.description || "")}${visited ? "<br><em>Obišeno</em>" : ""}`,
       );
       marker.addTo(this.markersLayer);
     });
