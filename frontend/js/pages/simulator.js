@@ -51,7 +51,7 @@ function buildTourOptions(tours, purchasedIds) {
       .map((t) => {
         const id = t.id || t._id;
         const title = t.title || "Bez naziva";
-        const suffix = purchasedIds.has(id) ? " (kupljeno)" : " (samo prva tačka)";
+        const suffix = purchasedIds.has(id) ? " (kupljeno)" : "";
         return `<option value="${escapeHtml(id)}">${escapeHtml(title)}${suffix}</option>`;
       })
       .join("")
@@ -72,7 +72,7 @@ function ensureMap() {
   }
   const container = document.getElementById("simulator-map");
   if (!container || typeof L === "undefined") {
-    showError(document.getElementById("sim-error"), "Mapa nije spremna (Leaflet).");
+    showError(document.getElementById("sim-error"), "Mapa nije spremna.");
     return;
   }
   try {
@@ -134,7 +134,7 @@ function renderProgressUI(progress) {
 
   if (!progress.visits?.length) {
     listEl.innerHTML =
-      "<li class='meta'>Nijedna tačka još nije obišena. Priđi unutar 80m ili klikni blizu tačke na mapi.</li>";
+      "<li class='meta'>Nijedna tačka još nije obišena. Priđi blizu tačke na mapi.</li>";
     return;
   }
 
@@ -196,11 +196,11 @@ async function loadTourOptions() {
 
   showError(errEl, "");
   select.innerHTML = '<option value="">Učitavanje tura...</option>';
-  setTourStatus("Učitavanje objavljenih tura...");
+  setTourStatus("Učitavanje tura...");
 
   if (!hasToken()) {
     select.innerHTML = '<option value="">Prijavi se prvo</option>';
-    setTourStatus("Niste prijavljeni — token je potreban za učitavanje tura.", true);
+    setTourStatus("Niste prijavljeni.", true);
     return;
   }
 
@@ -210,12 +210,12 @@ async function loadTourOptions() {
 
     if (!tours.length) {
       select.innerHTML = '<option value="">Nema objavljenih tura</option>';
-      setTourStatus("Nema objavljenih tura. Vodič mora prvo objaviti turu.");
+      setTourStatus("Nema tura za obilazak.");
       return;
     }
 
     select.innerHTML = buildTourOptions(tours, new Set());
-    setTourStatus(`Učitano ${tours.length} objavljenih tura.`);
+    setTourStatus("");
 
     api
       .getTokens()
@@ -257,11 +257,8 @@ async function onTourSelected() {
     currentKeypoints = tour.keypoints || (tour.first_keypoint ? [tour.first_keypoint] : []);
 
     const statusEl = document.getElementById("sim-status");
-    if (tour.keypoints?.length) {
-      statusEl.textContent =
-        "Klikni blizu tačke na mapi (unutar 80m) da se automatski zabeleži obilazak.";
-    } else if (tour.first_keypoint) {
-      statusEl.textContent = "Samo prva tačka — kupi turu za celu rutu i evidenciju.";
+    if (tour.keypoints?.length || tour.first_keypoint) {
+      statusEl.textContent = "Klikni blizu tačke na mapi da se zabeleži obilazak.";
     } else {
       statusEl.textContent = "Tura nema ključnih tačaka.";
     }

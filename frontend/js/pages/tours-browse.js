@@ -80,7 +80,6 @@ async function openTour(tourId) {
     document.getElementById("browse-detail-title").textContent = tour.title;
 
     const keypoints = tour.keypoints || (tour.first_keypoint ? [tour.first_keypoint] : []);
-    const hasFullRoute = keypoints.length > 1 || Boolean(tour.keypoints?.length);
 
     document.getElementById("browse-detail-body").innerHTML = `
       <p>${escapeHtml(tour.description)}</p>
@@ -88,9 +87,6 @@ async function openTour(tourId) {
       <p class="meta">Cena: <strong>${Number(tour.price || 0).toFixed(2)} RSD</strong></p>
       <p class="meta">Tagovi: ${(tour.tags || []).map(escapeHtml).join(", ") || "—"}</p>
       <h4>Mapa ture</h4>
-      <p class="meta" id="browse-map-hint">
-        ${keypoints.length} ključnih tačaka. Kupi turu za obilazak u simulatoru.
-      </p>
       <div id="browse-execution-map"></div>
       <p id="browse-nearest" class="meta"></p>
       <h4>Ključne tačke (${keypoints.length})</h4>
@@ -262,11 +258,11 @@ async function renderBrowseMap(keypoints) {
         const nearest = nearestKeypoint(loc.latitude, loc.longitude, keypoints);
         if (nearest) {
           document.getElementById("browse-nearest").innerHTML =
-            `Tvoja lokacija u odnosu na turu — najbliža tačka: <strong>${escapeHtml(nearest.keypoint.name)}</strong> (${nearest.distanceKm.toFixed(2)} km). Za promenu lokacije idi u <a href="#simulator">Simulator</a>.`;
+            `Najbliža tačka: <strong>${escapeHtml(nearest.keypoint.name)}</strong> (${nearest.distanceKm.toFixed(2)} km).`;
         }
       } else {
-        document.getElementById("browse-nearest").innerHTML =
-          'Lokacija nije postavljena. Postavi je u sekciji <a href="#simulator">Simulator</a>.';
+        document.getElementById("browse-nearest").textContent =
+          "Lokacija nije postavljena.";
       }
     } catch {
       document.getElementById("browse-nearest").textContent = "";

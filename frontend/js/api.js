@@ -40,10 +40,10 @@ async function request(path, options = {}) {
     });
   } catch (err) {
     if (err.name === "AbortError") {
-      throw new Error(`Zahtev je istekao (${path}). Proveri da li su servisi pokrenuti.`);
+      throw new Error("Zahtev je istekao.");
     }
     throw new Error(
-      "Nema veze sa API-jem. Pokreni: docker compose up --build, pa osveži stranicu (Ctrl+F5).",
+      "Nema veze sa serverom. Osveži stranicu (Ctrl+F5).",
     );
   } finally {
     clearTimeout(timeoutId);

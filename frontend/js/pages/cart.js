@@ -80,10 +80,7 @@ async function checkout() {
 
   try {
     const result = await api.checkout();
-    resultEl.innerHTML = `
-      <p class="success">Kupovina uspešna! SAGA ID: ${escapeHtml(result.sagaId)}</p>
-      <p class="meta">${result.tokens?.length || 0} token(a) kreirano.</p>
-    `;
+    resultEl.innerHTML = `<p class="success">Kupovina uspešna!</p>`;
     await loadCart();
     await loadTokens();
   } catch (err) {
@@ -114,7 +111,7 @@ async function loadTokens() {
       <li class="list-row">
         <div>
           <strong>${escapeHtml(t.tourName)}</strong>
-          <span class="meta">${escapeHtml(t.tourId)} · ${Number(t.price).toFixed(2)} RSD · ${formatDateTime(t.purchasedAt)}</span>
+          <span class="meta">${Number(t.price).toFixed(2)} RSD · ${formatDateTime(t.purchasedAt)}</span>
         </div>
       </li>`,
       )

@@ -17,7 +17,6 @@
       <div class="header-row">
         <div>
           <h1>SOA Tourist App</h1>
-          <p class="subtitle">Frontend za sve mikroservise (API Gateway → /api)</p>
         </div>
         <div id="user-bar" class="user-bar"></div>
       </div>
@@ -25,13 +24,8 @@
     </header>
 
     <main class="app-main">
-      <!-- AUTH -->
       <section class="page-section panel" data-page="auth">
         <h2>Prijava i registracija</h2>
-        <p class="meta">
-          Frontend je statički HTML + JavaScript. Zahteve šalje preko <code>fetch()</code> na
-          <code>/api/*</code> (nginx prosleđuje na API Gateway).
-        </p>
 
         <div class="grid-2">
           <div>
@@ -48,7 +42,6 @@
               <p id="login-error" class="error"></p>
               <button type="submit" class="btn primary">Prijavi se</button>
             </form>
-            <p class="meta endpoint-hint">POST /api/auth/login</p>
           </div>
 
           <div>
@@ -76,15 +69,14 @@
               <p id="register-error" class="error"></p>
               <button type="submit" class="btn primary">Registruj se</button>
             </form>
-            <p class="meta endpoint-hint">POST /api/auth/register</p>
           </div>
         </div>
 
         <details class="manual-token">
-          <summary>Ručno lepljenje JWT tokena</summary>
+          <summary>Ručna prijava</summary>
           <form id="token-form">
             <label class="field">
-              <span>Bearer token</span>
+              <span>Token</span>
               <textarea id="manual-token" rows="3"></textarea>
             </label>
             <p id="token-error" class="error"></p>
@@ -93,10 +85,8 @@
         </details>
       </section>
 
-      <!-- PROFILE -->
       <section class="page-section panel hidden" data-page="profile">
-        <h2>Profil (Stakeholders Service)</h2>
-        <p class="meta endpoint-hint">GET/PATCH /api/stakeholders/me</p>
+        <h2>Profil</h2>
         <div id="profile-output" class="info-box"></div>
         <form id="profile-form" class="grid-2">
           <label class="field">
@@ -123,14 +113,12 @@
         </form>
       </section>
 
-      <!-- BROWSE TOURS -->
       <section class="page-section panel hidden" data-page="browse">
         <div id="browse-list-wrap">
           <div class="panel-head">
-            <h2>Objavljene ture (Turista)</h2>
+            <h2>Objavljene ture</h2>
             <button type="button" id="btn-reload-published" class="btn ghost">Osveži</button>
           </div>
-          <p class="meta endpoint-hint">GET /api/tours/published · GET /api/tours/{id}</p>
           <p id="browse-error" class="error"></p>
           <ul id="published-list" class="item-list"></ul>
         </div>
@@ -149,9 +137,6 @@
           </div>
 
           <h3>Recenzije</h3>
-          <p class="meta endpoint-hint">
-            GET/POST /api/reviews · GET /api/reviews/tour/{id}/rating
-          </p>
           <ul id="reviews-list" class="item-list"></ul>
 
           <div id="review-section">
@@ -181,36 +166,30 @@
         </div>
       </section>
 
-      <!-- CART -->
       <section class="page-section panel hidden" data-page="cart">
-        <h2>Korpa i kupovina (Purchase Service)</h2>
-        <p class="meta endpoint-hint">
-          POST/GET /api/purchases/cart · POST checkout · GET /api/purchases/tokens
-        </p>
+        <h2>Korpa</h2>
         <div class="row-actions">
           <button type="button" id="btn-create-cart" class="btn ghost">Kreiraj korpu</button>
           <button type="button" id="btn-reload-cart" class="btn ghost">Osveži korpu</button>
-          <button type="button" id="btn-checkout" class="btn primary">Checkout (SAGA)</button>
+          <button type="button" id="btn-checkout" class="btn primary">Kupi</button>
         </div>
         <p id="cart-error" class="error"></p>
         <p>Ukupno: <strong id="cart-total">—</strong></p>
         <ul id="cart-items" class="item-list"></ul>
         <div id="checkout-result"></div>
 
-        <h3>Kupljene ture (tokeni)</h3>
-        <button type="button" id="btn-reload-tokens" class="btn ghost">Osveži tokene</button>
+        <h3>Kupljene ture</h3>
+        <button type="button" id="btn-reload-tokens" class="btn ghost">Osveži listu</button>
         <p id="tokens-error" class="error"></p>
         <ul id="tokens-list" class="item-list"></ul>
       </section>
 
-      <!-- GUIDE TOURS -->
       <section class="page-section panel hidden" data-page="guide">
         <div id="guide-list-view">
           <div class="panel-head">
-            <h2>Moje ture (Vodič)</h2>
+            <h2>Moje ture</h2>
             <button type="button" id="btn-new-tour" class="btn primary">Nova tura</button>
           </div>
-          <p class="meta endpoint-hint">CRUD /api/tours · keypoints · publish/archive</p>
           <p id="guide-list-error" class="error"></p>
           <ul id="guide-tours-list" class="item-list"></ul>
         </div>
@@ -328,14 +307,12 @@
         </div>
       </section>
 
-      <!-- BLOG -->
       <section class="page-section panel hidden" data-page="blog">
         <div id="blog-list-wrap">
           <div class="panel-head">
-            <h2>Blog (Blog Service)</h2>
+            <h2>Blog</h2>
             <button type="button" id="btn-reload-blogs" class="btn ghost">Osveži</button>
           </div>
-          <p class="meta endpoint-hint">GET/POST /api/blogs · komentari · lajkovi</p>
           <p id="blog-error" class="error"></p>
           <ul id="blogs-list" class="item-list"></ul>
 
@@ -379,12 +356,8 @@
         </div>
       </section>
 
-      <!-- FOLLOWERS -->
       <section class="page-section panel hidden" data-page="followers">
-        <h2>Pratioci (Followers Service)</h2>
-        <p class="meta endpoint-hint">
-          POST /api/followers/follow (gRPC preko gateway-a) · following · recommendations
-        </p>
+        <h2>Pratioci</h2>
 
         <form id="follow-form" class="inline-form">
           <label class="field">
@@ -422,18 +395,11 @@
         <ul id="followers-list" class="item-list"></ul>
       </section>
 
-      <!-- SIMULATOR -->
       <section class="page-section panel hidden" data-page="simulator">
         <div class="panel-head">
-          <h2>Obilazak ture — simulator lokacije</h2>
+          <h2>Simulator</h2>
           <button type="button" id="btn-reload-location" class="btn ghost">Osveži</button>
         </div>
-        <p class="meta">
-          Plave tačke = ključne tačke ture, zelena = tvoja lokacija. Kupljene ture prikazuju celu rutu.
-        </p>
-        <p class="meta endpoint-hint">
-          GET/PUT /api/simulator/location · POST /api/execution/{tourId}/check-position
-        </p>
 
         <label class="field">
           <span>Tura za obilazak</span>
@@ -447,40 +413,31 @@
           <p id="sim-status">Izaberi turu i klikni na mapu da postaviš lokaciju.</p>
           <p><strong>Koordinate:</strong> <span id="sim-coords">—</span></p>
           <p id="sim-nearest" class="meta"></p>
-        <div id="sim-progress" class="simulator-info hidden">
-          <p><strong>Napredak obilaska:</strong> <span id="sim-progress-text">—</span></p>
-          <ul id="sim-visits-list" class="simple-list"></ul>
-        </div>
+          <div id="sim-progress" class="simulator-info hidden">
+            <p><strong>Napredak:</strong> <span id="sim-progress-text">—</span></p>
+            <ul id="sim-visits-list" class="simple-list"></ul>
+          </div>
         </div>
         <p id="sim-error" class="error"></p>
         <div id="simulator-map"></div>
       </section>
 
-      <!-- ADMIN -->
       <section class="page-section panel hidden" data-page="admin">
         <div class="panel-head">
-          <h2>Admin (Auth Service)</h2>
+          <h2>Admin</h2>
           <button type="button" id="btn-reload-users" class="btn ghost">Osveži</button>
         </div>
-        <p class="meta endpoint-hint">GET /api/auth/admin/users · PATCH block</p>
         <p id="admin-error" class="error"></p>
         <ul id="admin-users-list" class="item-list"></ul>
       </section>
     </main>
-
-    <footer class="app-footer">
-      <p class="meta">
-        Tehnologija: HTML + CSS + vanilla JavaScript (ES modules) · Mapa: Leaflet · JWT u
-        localStorage
-      </p>
-    </footer>
 
     <script
       src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
       integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
       crossorigin=""
     ></script>
-    <script src="./js/simulator-tours.js?v=1"></script>
-    <script type="module" src="./js/main.js?v=4"></script>
+    <script src="./js/simulator-tours.js?v=2"></script>
+    <script type="module" src="./js/main.js?v=5"></script>
   </body>
 </html>

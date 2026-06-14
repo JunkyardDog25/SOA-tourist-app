@@ -1,6 +1,5 @@
 /**
- * Nezavisan od ES modula — učitava ture u simulator padajući meni.
- * Radi čak i ako main.js moduli ne uspeju da se pokrenu.
+ * Učitava ture u padajući meni simulatora.
  */
 (function () {
   function esc(text) {
@@ -27,12 +26,12 @@
     const token = localStorage.getItem("jwt_token") || "";
     if (!token) {
       select.innerHTML = '<option value="">Prijavi se prvo</option>';
-      if (status) status.textContent = "Niste prijavljeni — uloguj se kao TOURIST.";
+      if (status) status.textContent = "Niste prijavljeni.";
       return;
     }
 
     select.innerHTML = '<option value="">Učitavanje tura...</option>';
-    if (status) status.textContent = "Učitavanje objavljenih tura...";
+    if (status) status.textContent = "Učitavanje tura...";
     if (errEl) errEl.textContent = "";
 
     try {
@@ -74,7 +73,7 @@
       if (!tours.length) {
         select.innerHTML = '<option value="">Nema objavljenih tura</option>';
         if (status) {
-          status.textContent = "Nema objavljenih tura — vodič mora kreirati i objaviti turu.";
+          status.textContent = "Nema tura za obilazak.";
         }
         return;
       }
@@ -92,13 +91,13 @@
           .join("");
 
       if (status) {
-        status.textContent = "Učitano " + tours.length + " objavljenih tura.";
+        status.textContent = "";
       }
     } catch (err) {
       select.innerHTML = '<option value="">Greška pri učitavanju</option>';
       const msg =
         err.name === "AbortError"
-          ? "Zahtev je istekao. Proveri docker compose up."
+          ? "Zahtev je istekao."
           : err.message || String(err);
       if (status) status.textContent = "Greška: " + msg;
       if (errEl) errEl.textContent = msg;

@@ -50,7 +50,7 @@ export function initAuthPage() {
     showError(errEl, "");
     const token = document.getElementById("manual-token").value.trim();
     if (!token) {
-      showError(errEl, "Unesi JWT token.");
+      showError(errEl, "Unesi token.");
       return;
     }
     setToken(token);
