@@ -133,11 +133,17 @@ services:
       JWT_EXPIRATION_MS: ${JWT_EXPIRATION_MS}
       STAKEHOLDERS_SERVICE_URL: http://stakeholders-service:8080/api/stakeholders
       GRPC_SERVER_PORT: 9090
+      OTEL_SERVICE_NAME: auth-service
+      OTEL_EXPORTER_OTLP_TRACES_ENDPOINT: http://tempo:4318/v1/traces
     expose:
       - "9090"
     depends_on:
       auth-neo4j:
         condition: service_healthy
+      tempo:
+        condition: service_started
+      loki:
+        condition: service_started
     networks:
       - auth-net
       - shared-net
